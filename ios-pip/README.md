@@ -73,12 +73,55 @@ TEAM_ID=你的TeamID ./build-ipa.sh     # 出已签名 IPA（直接装自己手�
 
 ### 路线 B：没有 Mac —— 用 GitHub Actions 的 macOS 机器
 
-1. 把整个项目推到你的 GitHub 仓库
-2. 仓库 → Actions → 选 **Build iOS IPA** → Run workflow（可留空 team_id）
-3. 跑完在 run 页面下载 artifact `ClockPiP-unsigned-ipa`
-4. 本地用 **Sideloadly**（推荐，Windows 也有）或 AltStore 装到手机 —— 它会用你的 Apple ID 重签
+**第 1 步：在 GitHub 建一个空仓库**
 
-> 已签名 IPA 需要证书，Actions 里要另外配 p12 / fastlane match；自用直接走未签名 + 重签更省事。
+网页版 GitHub → 右上角 `+` → **New repository** → 名字随便（如 `fxclock`）→
+**不要**勾 Add a README / .gitignore / license（要空仓库）→ Create。
+建好后页面会显示仓库地址，形如 `https://github.com/你的用户名/fxclock.git`。
+
+**第 2 步：把本地项目推上去**
+
+项目已经在本机初始化好 git 了（含 `.gitignore` / `.gitattributes` 和第一次提交），
+所以只需要接上远端再推一次：
+
+```powershell
+cd "C:\Users\陈\Documents\ChatGPT\定时点击器"
+git remote add origin https://github.com/你的用户名/fxclock.git
+git push -u origin main
+```
+
+- 第一次推会弹出浏览器让你登录 GitHub（或让你填 Personal Access Token）
+- 之后再改代码，就是 `git add -A` → `git commit -m "说明"` → `git push`
+
+**第 3 步：让它跑起来**
+
+1. 打开仓库页面 → 顶部 **Actions** 标签
+2. 如果看到 "Workflows aren't being run on this repository" 之类的提示，点绿色按钮启用一下
+3. 左侧选 **Build iOS IPA**（这个工作流是手动触发的）→ 右侧 **Run workflow** → 分支选 `main` →
+   第二个输入框 `team_id` **留空**（留空就出未签名包）→ 点绿色的 **Run workflow**
+4. 大约 3～5 分钟跑完，状态变绿 ✓
+
+**第 4 步：下载 IPA**
+
+点进这次 run → 页面最下方 **Artifacts** 区 → 下载 **ClockPiP-unsigned-ipa**
+（GitHub 下载下来是个 zip，解压后里面就是 `ClockPiP-unsigned.ipa`）。
+
+> 免费账号的额度：私有仓库用 macOS runner 按 10 倍计费，这个工程一次约 3 分钟 → 折合 30 分钟，
+> 免费额度 2000 分钟/月，随便跑。仓库设为 public 则完全不扣。
+
+**第 5 步：装到 iPhone（Windows 电脑就行）**
+
+1. 装 iTunes（或 Win11 的「Apple 设备」App）—— Sideloadly 要靠它认设备
+2. 装 [Sideloadly](https://sideloadly.io/)（也有 macOS 版）
+3. iPhone 用数据线连电脑 → 手机上点「信任此电脑」
+4. 打开 Sideloadly：把 `ClockPiP-unsigned.ipa` 拖进 `IPA` 框 → `Apple ID` 填你的（**免费账号即可**）→ Start
+5. 手机会装上一个「悬浮时钟」→ 首次打开前先在
+   **设置 → 通用 → VPN 与设备管理 → 开发者 App** 里点「信任」
+6. 打开 App → 点「开启画中画」→ 回桌面或打开微信，时钟就浮在最上层了
+
+> **7 天限制**：免费 Apple ID 签的 App 有效期 7 天，到期要重装一次（Sideloadly 重跑第 4～5 步即可）。
+> 想省事可以装 AltStore（同一 Wi-Fi 下用 AltServer 自动续签），或买 $99/年的开发者账号（有效期 1 年）。
+> 已签名 IPA 需要证书，Actions 里要另外配 p12 / fastlane match；自用直接走未签名 + 重签最省事。
 
 ### 路线 C：打开 Xcode 手动 Archive
 

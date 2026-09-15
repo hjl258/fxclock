@@ -1,0 +1,13 @@
+# Windows 的 autocrlf 会把换行改成 CRLF，shell 脚本带 CRLF 在 macOS 上跑不起来，
+# 所以这里显式声明：文本一律 LF，只有 Windows 专用脚本保留 CRLF。
+* text=auto eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.swift text eol=lf
+*.plist text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.png binary
+*.jpg binary
+*.ipa binary
