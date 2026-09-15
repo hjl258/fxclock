@@ -3,12 +3,19 @@ name: Build iOS IPA
 # 没有 Mac 也能出 IPA：把工程推到 GitHub，这个工作流跑在 GitHub 的 macOS 机器上，
 # 产出未签名 IPA 作为 artifact，下载后用 Sideloadly / AltStore 用你的 Apple ID 重签安装。
 on:
+  # 手动触发（Actions 页右侧的 Run workflow 按钮）
   workflow_dispatch:
     inputs:
       team_id:
         description: '可选：Apple Team ID（填了就出已签名 IPA，需要配好证书）'
         required: false
         default: ''
+  # 自动触发：只改 iOS 工程/工作流本身时才跑，省额度
+  push:
+    branches: [main]
+    paths:
+      - 'ios-pip/**'
+      - '.github/workflows/ios-ipa.yml'
 
 jobs:
   ipa:
