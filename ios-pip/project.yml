@@ -27,3 +27,15 @@ targets:
       - sdk: AVFoundation.framework
       - sdk: CoreMedia.framework
       - sdk: CoreVideo.framework
+
+# 显式声明共享 scheme：XcodeGen 默认不生成 scheme 文件，
+# 不写这段的话 xcodebuild -scheme ClockPiP 会直接报 "does not contain a scheme"
+schemes:
+  ClockPiP:
+    build:
+      targets:
+        ClockPiP: all
+    run:
+      config: Debug
+    archive:
+      config: Release

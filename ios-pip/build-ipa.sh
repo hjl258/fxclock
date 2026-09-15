@@ -35,30 +35,40 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
 echo "==> 归档（Release / iphoneos）"
+# 优先用 scheme；万一工程里没有共享 scheme 就退回 -target，别白跑一趟
+TARGET_MODE=0
+if ! xcodebuild -list -project "$PROJECT_NAME.xcodeproj" | grep -q "^    $SCHEME$"; then
+  echo "    !! 工程里没有 scheme $SCHEME，退回 -target 归档"
+  TARGET_MODE=1
+fi
+if [ "$TARGET_MODE" = "1" ]; then
+  SCOPE="-target $SCHEME -sdk iphoneos"
+else
+  SCOPE="-scheme $SCHEME -destination generic/platform=iOS"
+fi
+
 if [ -n "${TEAM_ID:-}" ]; then
   echo "    签名团队：$TEAM_ID"
+  # shellcheck disable=SC2086
   xcodebuild archive \
     -project "$PROJECT_NAME.xcodeproj" \
-    -scheme "$SCHEME" \
+    $SCOPE \
     -configuration Release \
-    -destination 'generic/platform=iOS' \
     -archivePath "$ARCHIVE_PATH" \
     DEVELOPMENT_TEAM="$TEAM_ID" \
     CODE_SIGN_STYLE=Automatic \
-    -allowProvisioningUpdates \
-    | tail -n 20
+    -allowProvisioningUpdates
 else
   echo "    未指定 TEAM_ID，出未签名包"
+  # shellcheck disable=SC2086
   xcodebuild archive \
     -project "$PROJECT_NAME.xcodeproj" \
-    -scheme "$SCHEME" \
+    $SCOPE \
     -configuration Release \
-    -destination 'generic/platform=iOS' \
     -archivePath "$ARCHIVE_PATH" \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
-    CODE_SIGN_IDENTITY="" \
-    | tail -n 20
+    CODE_SIGN_IDENTITY=""
 fi
 
 APP_PATH="$ARCHIVE_PATH/Products/Applications/$PROJECT_NAME.app"

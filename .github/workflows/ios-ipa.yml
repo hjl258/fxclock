@@ -26,30 +26,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 选最新 Xcode
+        run: |
+          set -euo pipefail
+          latest=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$latest" ]; then sudo xcode-select -s "$latest"; fi
+          xcodebuild -version
+          echo '--- iOS SDK ---'
+          xcrun --sdk iphoneos --show-sdk-version
+          xcrun --sdk iphoneos --show-sdk-path
+
       - name: 安装 XcodeGen
         run: brew install xcodegen
 
       - name: 生成工程
-        run: xcodegen generate
+        run: |
+          set -euo pipefail
+          xcodegen generate
+          echo '--- 工程里的 scheme 与 target（排错用）---'
+          xcodebuild -list -project ClockPiP.xcodeproj
 
       - name: 归档（未签名）
         run: |
           set -o pipefail
-          xcodebuild archive \
-            -project ClockPiP.xcodeproj \
-            -scheme ClockPiP \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -archivePath build/ClockPiP.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" | tail -n 30
+          COMMON="-project ClockPiP.xcodeproj -configuration Release -archivePath build/ClockPiP.xcarchive"
+          NOSIGN="CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="
+          # 优先用 scheme（project.yml 里已声明）；万一没有就退回 -target，避免整轮白跑
+          if xcodebuild -list -project ClockPiP.xcodeproj | grep -q '^    ClockPiP$'; then
+            echo '==> 用 -scheme ClockPiP 归档'
+            xcodebuild archive $COMMON -scheme ClockPiP -destination 'generic/platform=iOS' $NOSIGN
+          else
+            echo '!! 没有找到 scheme，退回 -target 归档'
+            xcodebuild archive $COMMON -target ClockPiP -sdk iphoneos $NOSIGN
+          fi
 
       - name: 打成 IPA
         run: |
           set -euo pipefail
+          APP=build/ClockPiP.xcarchive/Products/Applications/ClockPiP.app
+          ls -l "$APP"
           mkdir -p build/Payload
-          cp -R build/ClockPiP.xcarchive/Products/Applications/ClockPiP.app build/Payload/
+          cp -R "$APP" build/Payload/
           cd build && zip -qry ClockPiP-unsigned.ipa Payload
           ls -lh ClockPiP-unsigned.ipa
 
