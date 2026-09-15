@@ -34,37 +34,34 @@ fi
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
-echo "==> 归档（Release / iphoneos）"
-# 优先用 scheme；万一工程里没有共享 scheme 就退回 -target，别白跑一趟
-TARGET_MODE=0
-if ! xcodebuild -list -project "$PROJECT_NAME.xcodeproj" | grep -q "^    $SCHEME$"; then
-  echo "    !! 工程里没有 scheme $SCHEME，退回 -target 归档"
-  TARGET_MODE=1
-fi
-if [ "$TARGET_MODE" = "1" ]; then
-  SCOPE="-target $SCHEME -sdk iphoneos"
-else
-  SCOPE="-scheme $SCHEME -destination generic/platform=iOS"
+echo "==> 确认 scheme"
+# xcodebuild archive 必须用 -scheme（-target 不支持 archive 动作，会以 exit 64 失败），
+# 所以先确认 scheme 在不在；不在就把 project.yml 的 schemes 段补上
+xcodebuild -list -project "$PROJECT_NAME.xcodeproj"
+if ! xcodebuild -list -json -project "$PROJECT_NAME.xcodeproj" 2>/dev/null | grep -q "\"$SCHEME\""; then
+  echo "    !! 工程里没有 scheme $SCHEME（检查 project.yml 的 schemes 段）"
+  exit 1
 fi
 
+echo "==> 归档（Release / iphoneos）"
 if [ -n "${TEAM_ID:-}" ]; then
   echo "    签名团队：$TEAM_ID"
-  # shellcheck disable=SC2086
   xcodebuild archive \
     -project "$PROJECT_NAME.xcodeproj" \
-    $SCOPE \
+    -scheme "$SCHEME" \
     -configuration Release \
+    -destination 'generic/platform=iOS' \
     -archivePath "$ARCHIVE_PATH" \
     DEVELOPMENT_TEAM="$TEAM_ID" \
     CODE_SIGN_STYLE=Automatic \
     -allowProvisioningUpdates
 else
   echo "    未指定 TEAM_ID，出未签名包"
-  # shellcheck disable=SC2086
   xcodebuild archive \
     -project "$PROJECT_NAME.xcodeproj" \
-    $SCOPE \
+    -scheme "$SCHEME" \
     -configuration Release \
+    -destination 'generic/platform=iOS' \
     -archivePath "$ARCHIVE_PATH" \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO \
