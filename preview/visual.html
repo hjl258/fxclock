@@ -1,0 +1,2690 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>悬浮时钟 · 页面预览</title>
+<style>
+html,body{margin:0;padding:0}
+body{min-height:100vh;box-sizing:border-box;padding:26px 22px 40px;background:#0f1320;color:#e8ecf6;
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  background-image:radial-gradient(60% 40% at 85% 6%,rgba(118,226,212,.14),rgba(118,226,212,0) 70%),
+    radial-gradient(50% 36% at 4% 26%,rgba(246,192,212,.14),rgba(246,192,212,0) 70%)}
+#fx-wrap{max-width:560px;margin:0 auto}
+#fx-head{font-size:15px;font-weight:600;letter-spacing:.4px;margin:0 0 16px}
+#fx-note{font-size:12.5px;line-height:1.7;color:#8b93a7;margin:16px 0 0}
+code{font-size:12px;color:#9fb4ff}
+</style>
+<style>
+#fm-root{font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+#fm-root *{box-sizing:border-box}
+#fm-bar{display:flex;gap:8px;flex-wrap:wrap;padding:2px 2px 14px}
+#fm-bar button{appearance:none;font:inherit;font-size:13.5px;line-height:1;padding:9px 15px;border-radius:10px;cursor:pointer;
+  color:inherit;background:rgba(127,133,150,.12);border:1px solid rgba(127,133,150,.28);transition:background .15s,border-color .15s,color .15s}
+#fm-bar button:hover{border-color:rgba(127,133,150,.5)}
+#fm-bar button.fm-on{background:linear-gradient(135deg,#5aa9f8,#2f6ff0);border-color:transparent;color:#fff;font-weight:600;
+  box-shadow:0 6px 18px rgba(59,127,240,.35)}
+#fm-holder{width:100%}
+#fm-frame{position:relative;width:375px;height:812px;border-radius:40px;overflow:hidden;background:#eef1f7;
+  transform-origin:top left;box-shadow:0 0 0 7px #1b2130,0 0 0 8px #2c3446,0 26px 60px rgba(10,14,24,.45)}
+#fm-root .fm-screen{position:absolute;left:0;top:0;width:375px;height:812px;overflow-x:hidden;overflow-y:auto;display:none}
+#fm-root .fm-screen.fm-active{display:block}
+#fm-root .fm-screen::-webkit-scrollbar{width:0}
+#fm-caption{margin-top:16px;font-size:12.5px;line-height:1.7;color:#8b93a7}
+#fm-caption b{color:inherit;font-weight:600;opacity:.9}
+#fm-screen-clock,#fm-screen-clock{margin: 0; padding: 0; width: 375px;}
+#fm-screen-clock img{object-fit: contain; display: block;}
+#fm-screen-clock .switch-el{-webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 12px; background: #e2e6ee; position: relative;}
+#fm-screen-clock .switch-el:checked{background: #3b7ff0;}
+#fm-screen-clock .switch-el::after{content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff;}
+#fm-screen-clock .switch-el:checked::after{left: 20px;}
+#fm-screen-clock{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#fm-screen-clock .body{position: relative;
+  min-height: 812px;}
+#fm-screen-clock .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#fm-screen-clock .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#fm-screen-clock .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#fm-screen-clock .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#fm-screen-clock .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#fm-screen-clock .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#fm-screen-clock .nav-gap{flex: 1;}
+#fm-screen-clock .tap{opacity: 0.7;}
+#fm-screen-clock .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#fm-screen-clock .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clock .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#fm-screen-clock .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#fm-screen-clock .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#fm-screen-clock .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#fm-screen-clock .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-clock .row-item:last-child{border-bottom: none;}
+#fm-screen-clock .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-clock .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#fm-screen-clock .switch-s{transform: scale(0.78);}
+#fm-screen-clock .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#fm-screen-clock .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#fm-screen-clock .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#fm-screen-clock .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#fm-screen-clock .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-clock .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#fm-screen-clock .sheet-group{margin-top: 13.000px;}
+#fm-screen-clock .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#fm-screen-clock .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#fm-screen-clock .radio-row:last-child{border-bottom: none;}
+#fm-screen-clock .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-clock .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#fm-screen-clock .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#fm-screen-clock .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-clock .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-clock .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#fm-screen-clock .event-card{position: relative;
+  margin: 11.000px 14.000px 0;
+  padding: 13.000px 13.000px 11.000px;
+  border-radius: 14.000px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #eef6fe 0%, #e8f0fd 58%, #eaf1fb 100%);
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.12);}
+#fm-screen-clock .ribbon{position: absolute;
+  right: 0;
+  top: 0;
+  width: 33.000px;
+  height: 33.000px;
+  border-bottom-left-radius: 13.000px;
+  background: linear-gradient(180deg, #ddecfd 0%, #cbe0fc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clock .ribbon-icon{width: 18.000px;
+  height: 18.000px;
+  margin-left: 4.000px;
+  margin-top: -3.000px;}
+#fm-screen-clock .event-head{display: flex;
+  align-items: center;
+  padding-right: 30.000px;}
+#fm-screen-clock .event-thumb{flex: none;
+  width: 23.000px;
+  height: 23.000px;
+  border-radius: 6.500px;
+  margin-right: 8.000px;
+  background: linear-gradient(160deg, #5aa9f6 0%, #2f78ee 100%);
+  box-shadow: 0 3.000px 7.000px rgba(47, 120, 238, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clock .event-thumb-icon{width: 15.000px;
+  height: 15.000px;}
+#fm-screen-clock .event-title{flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;}
+#fm-screen-clock .event-mid{display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 9.000px;}
+#fm-screen-clock .price{display: flex;
+  align-items: baseline;
+  color: #ff6a00;}
+#fm-screen-clock .price-sym{font-size: 13.000px;
+  font-weight: 600;
+  margin-right: 2.000px;}
+#fm-screen-clock .price-num{font-size: 21.000px;
+  font-weight: 700;
+  letter-spacing: 0.500px;}
+#fm-screen-clock .cd-label{font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-clock .event-foot{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8.000px;}
+#fm-screen-clock .event-target{font-size: 13.000px;
+  color: #8b93a7;}
+#fm-screen-clock .digits{display: flex;
+  align-items: center;}
+#fm-screen-clock .digit{min-width: 28.000px;
+  height: 28.000px;
+  padding: 0 3.000px;
+  border-radius: 6.000px;
+  background: #ffffff;
+  box-shadow: 0 2.000px 6.000px rgba(120, 150, 200, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16.000px;
+  font-weight: 700;
+  color: #1b1f2a;}
+#fm-screen-clock .colon{font-size: 13.000px;
+  color: #8b93a7;
+  margin: 0 4.000px;}
+#fm-screen-clock .digit-last{margin-left: 9.000px;
+  min-width: 24.000px;}
+#fm-screen-clock .card-live{background: linear-gradient(150deg, #fff1ec 0%, #ffe7e0 100%);
+  box-shadow: 0 6.000px 15.000px rgba(255, 120, 80, 0.18);}
+#fm-screen-clock .card-live .cd-label,#fm-screen-clock .card-live .price,#fm-screen-clock .card-live .price-num{color: #ff4d2d;}
+#fm-screen-clock .card-done{opacity: 0.72;}
+#fm-screen-clock .ring-wrap{display: flex;
+  justify-content: center;
+  margin-top: 28.000px;}
+#fm-screen-clock .quick-panel{display: flex;
+  align-items: center;
+  margin: 36.000px 14.000px 0;
+  padding: 11.000px 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);}
+#fm-screen-clock .quick-circle{flex: none;
+  width: 48.000px;
+  height: 48.000px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fdfeff 0%, #eef1f8 100%);
+  box-shadow: 0 4.000px 10.000px rgba(140, 160, 200, 0.16), inset 0 0 0 0.500px rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clock .quick-icon{width: 22.000px;
+  height: 22.000px;}
+#fm-screen-clock .quick-texts{flex: 1;
+  margin-left: 11.000px;}
+#fm-screen-clock .quick-title{display: block;
+  font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-clock .quick-sub{display: block;
+  margin-top: 3.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-clock .quick-chevron{width: 15.000px;
+  height: 15.000px;}
+#fm-screen-clock .collapse{display: flex;
+  justify-content: center;
+  margin: 15.000px 0 3.000px;}
+#fm-screen-clock .collapse-icon{width: 18.000px;
+  height: 18.000px;
+  opacity: 0.6;}
+#fm-screen-clock .panel{margin: 6.000px 14.000px 0;
+  padding: 2.000px 13.000px;
+  border-radius: 12.000px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 5.000px 12.000px rgba(140, 160, 200, 0.12);}
+#fm-screen-clock .panel-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 50.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-clock .panel-row:last-child{border-bottom: none;}
+#fm-screen-clock .panel-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-clock .radio-left{display: flex;
+  flex-direction: column;}
+#fm-screen-clock .radio-desc{margin-top: 3.000px;
+  font-size: 11.000px;
+  color: #98a0b3;}
+#fm-screen-clock .sheet-btn{margin-top: 20.000px;}
+#fm-screen-clock .ring{position: relative;}
+#fm-screen-clock .ring-face{position: absolute;
+  left: 2.000px;
+  top: 2.000px;
+  right: 2.000px;
+  bottom: 2.000px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffffff 0%, #fbfcfe 45%, #e8ecf5 100%);
+  box-shadow: 0 7.000px 21.000px rgba(118, 136, 178, 0.30);}
+#fm-screen-clock .ring-face-inner{position: absolute;
+  left: 16.750px;
+  top: 16.750px;
+  right: 16.750px;
+  bottom: 16.750px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 28%, #ffffff 0%, #f7f8fc 72%, #eef1f8 100%);}
+#fm-screen-clock .ring-face-line{position: absolute;
+  left: 10.500px;
+  top: 10.500px;
+  right: 10.500px;
+  bottom: 10.500px;
+  border-radius: 50%;
+  border: 1.000px solid rgba(255, 255, 255, 0.85);}
+#fm-screen-clock .ring-ticks,#fm-screen-clock .ring-arc{position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: block;}
+#fm-screen-clock .ring-center{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clock .ring-badge{width: 46.000px;
+  height: 46.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(180deg, #f2f4ff 0%, #e9ecfb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 13.000px;}
+#fm-screen-clock .ring-badge-icon{width: 25.000px;
+  height: 25.000px;}
+#fm-screen-clock .ring-time{font-size: 36.000px;
+  font-weight: 700;
+  color: #1b1f2a;
+  letter-spacing: 0.500px;
+  line-height: 1;}
+#fm-screen-clock .ring-sub{margin-top: 10.000px;
+  font-size: 13.000px;
+  color: #98a0b3;
+  letter-spacing: 0.500px;}
+#fm-screen-clock .float-pill{position: absolute;
+  z-index: 200;
+  box-sizing: border-box;
+  padding: 7.000px 10.000px 6.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(165deg, #4a5464 0%, #3c4553 45%, #333b48 100%);
+  box-shadow: 0 8.000px 18.000px rgba(10, 14, 24, 0.42), inset 0 0 0 0.500px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;}
+#fm-screen-clock .fp-head{display: flex;
+  align-items: center;
+  justify-content: space-between;}
+#fm-screen-clock .fp-head-left{display: flex;
+  align-items: center;}
+#fm-screen-clock .fp-latency{flex: none;}
+#fm-screen-clock .fp-click{display: flex;
+  align-items: center;
+  margin-left: 8.000px;}
+#fm-screen-clock .fp-click-label{font-size: 11.000px;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.500px;}
+#fm-screen-clock .fp-click-dot{width: 8.000px;
+  height: 8.000px;
+  border-radius: 50%;
+  margin-left: 4.000px;}
+#fm-screen-clock .fp-click-dot-on{background: #37b24d;
+  box-shadow: 0 0 6.000px rgba(55, 178, 77, 0.95);}
+#fm-screen-clock .fp-click-dot-off{background: #ef5b45;
+  box-shadow: 0 0 6.000px rgba(239, 91, 69, 0.85);}
+#fm-screen-clock .fp-latency{font-size: 12.000px;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.500px;}
+#fm-screen-clock .fp-source{font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.500px;}
+#fm-screen-clock .fp-main{display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-top: 1.000px;}
+#fm-screen-clock .fp-time{font-size: 30.000px;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 0.500px;
+  line-height: 1;}
+#fm-screen-clock .fp-tenth{font-size: 34.000px;
+  font-weight: 700;
+  color: #ee5a2e;
+  line-height: 1;
+  margin-left: 1.000px;}
+#fm-screen-clock .fp-bottom{width: 100%;
+  height: 31.000px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;}
+#fm-screen-clock .fp-hide{display: none !important;}
+#fm-screen-clock .fp-ruler-labels{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.000px;}
+#fm-screen-clock .fp-ruler-label{font-size: 10.000px;
+  color: rgba(255, 255, 255, 0.55);}
+#fm-screen-clock .fp-ruler-track{position: relative;
+  height: 3.000px;
+  margin-top: 4.000px;
+  border-radius: 1.500px;
+  background: rgba(255, 255, 255, 0.22);}
+#fm-screen-clock .fp-ruler-fill{position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 1.500px;
+  background: linear-gradient(90deg, #d1553a, #ee5a2e);}
+#fm-screen-clock .fp-ruler-knob{position: absolute;
+  top: 50%;
+  width: 9.000px;
+  height: 9.000px;
+  margin-left: -4.500px;
+  border-radius: 50%;
+  background: #ee5a2e;
+  border: 1.500px solid rgba(255, 255, 255, 0.85);
+  transform: translateY(-50%);
+  box-sizing: border-box;}
+#fm-screen-clock .fp-perf{display: flex;
+  align-items: flex-end;
+  justify-content: space-between;}
+#fm-screen-clock .fp-hz{font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);}
+#fm-screen-clock .fp-net{display: flex;
+  flex-direction: column;
+  align-items: flex-end;}
+#fm-screen-clock .fp-net-line{font-size: 11.000px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;}
+#fm-screen-clock .tabbar-wrap{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0 12.000px calc(8.000px + env(safe-area-inset-bottom));}
+#fm-screen-clock .tabbar-hide{display: none;}
+#fm-screen-clock .tabbar{display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62.000px;
+  border-radius: 31.000px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6.000px 17.000px rgba(120, 140, 180, 0.22);
+  padding: 0 5.000px;}
+#fm-screen-clock .tab-item{flex: 1 1 0;
+  max-width: 110.000px;
+  height: 50.000px;
+  margin: 0 3.000px;
+  border-radius: 15.000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clock .tab-on{background: linear-gradient(180deg, #e8f1ff 0%, #dfeafd 100%);}
+#fm-screen-clock .tab-icon{width: 22.000px;
+  height: 22.000px;}
+#fm-screen-clock .tab-text{margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #2c3140;
+  white-space: nowrap;}
+#fm-screen-clock .tab-on .tab-text{color: #2f6fd0;
+  font-weight: 600;}
+#fm-screen-float,#fm-screen-float{margin: 0; padding: 0; width: 375px;}
+#fm-screen-float img{object-fit: contain; display: block;}
+#fm-screen-float .switch-el{-webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 12px; background: #e2e6ee; position: relative;}
+#fm-screen-float .switch-el:checked{background: #3b7ff0;}
+#fm-screen-float .switch-el::after{content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff;}
+#fm-screen-float .switch-el:checked::after{left: 20px;}
+#fm-screen-float{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#fm-screen-float .body{position: relative;
+  min-height: 812px;}
+#fm-screen-float .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#fm-screen-float .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#fm-screen-float .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#fm-screen-float .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#fm-screen-float .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#fm-screen-float .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#fm-screen-float .nav-gap{flex: 1;}
+#fm-screen-float .tap{opacity: 0.7;}
+#fm-screen-float .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#fm-screen-float .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-float .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#fm-screen-float .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#fm-screen-float .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#fm-screen-float .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#fm-screen-float .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-float .row-item:last-child{border-bottom: none;}
+#fm-screen-float .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-float .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#fm-screen-float .switch-s{transform: scale(0.78);}
+#fm-screen-float .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#fm-screen-float .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#fm-screen-float .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#fm-screen-float .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#fm-screen-float .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-float .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#fm-screen-float .sheet-group{margin-top: 13.000px;}
+#fm-screen-float .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#fm-screen-float .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#fm-screen-float .radio-row:last-child{border-bottom: none;}
+#fm-screen-float .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-float .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#fm-screen-float .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#fm-screen-float .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-float .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-float .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#fm-screen-float .event-card{position: relative;
+  margin: 11.000px 14.000px 0;
+  padding: 13.000px 13.000px 11.000px;
+  border-radius: 14.000px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #eef6fe 0%, #e8f0fd 58%, #eaf1fb 100%);
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.12);}
+#fm-screen-float .ribbon{position: absolute;
+  right: 0;
+  top: 0;
+  width: 33.000px;
+  height: 33.000px;
+  border-bottom-left-radius: 13.000px;
+  background: linear-gradient(180deg, #ddecfd 0%, #cbe0fc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-float .ribbon-icon{width: 18.000px;
+  height: 18.000px;
+  margin-left: 4.000px;
+  margin-top: -3.000px;}
+#fm-screen-float .event-head{display: flex;
+  align-items: center;
+  padding-right: 30.000px;}
+#fm-screen-float .event-thumb{flex: none;
+  width: 23.000px;
+  height: 23.000px;
+  border-radius: 6.500px;
+  margin-right: 8.000px;
+  background: linear-gradient(160deg, #5aa9f6 0%, #2f78ee 100%);
+  box-shadow: 0 3.000px 7.000px rgba(47, 120, 238, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-float .event-thumb-icon{width: 15.000px;
+  height: 15.000px;}
+#fm-screen-float .event-title{flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;}
+#fm-screen-float .event-mid{display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 9.000px;}
+#fm-screen-float .price{display: flex;
+  align-items: baseline;
+  color: #ff6a00;}
+#fm-screen-float .price-sym{font-size: 13.000px;
+  font-weight: 600;
+  margin-right: 2.000px;}
+#fm-screen-float .price-num{font-size: 21.000px;
+  font-weight: 700;
+  letter-spacing: 0.500px;}
+#fm-screen-float .cd-label{font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-float .event-foot{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8.000px;}
+#fm-screen-float .event-target{font-size: 13.000px;
+  color: #8b93a7;}
+#fm-screen-float .digits{display: flex;
+  align-items: center;}
+#fm-screen-float .digit{min-width: 28.000px;
+  height: 28.000px;
+  padding: 0 3.000px;
+  border-radius: 6.000px;
+  background: #ffffff;
+  box-shadow: 0 2.000px 6.000px rgba(120, 150, 200, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16.000px;
+  font-weight: 700;
+  color: #1b1f2a;}
+#fm-screen-float .colon{font-size: 13.000px;
+  color: #8b93a7;
+  margin: 0 4.000px;}
+#fm-screen-float .digit-last{margin-left: 9.000px;
+  min-width: 24.000px;}
+#fm-screen-float .card-live{background: linear-gradient(150deg, #fff1ec 0%, #ffe7e0 100%);
+  box-shadow: 0 6.000px 15.000px rgba(255, 120, 80, 0.18);}
+#fm-screen-float .card-live .cd-label,#fm-screen-float .card-live .price,#fm-screen-float .card-live .price-num{color: #ff4d2d;}
+#fm-screen-float .card-done{opacity: 0.72;}
+#fm-screen-float .ring-wrap{display: flex;
+  justify-content: center;
+  margin-top: 28.000px;}
+#fm-screen-float .quick-panel{display: flex;
+  align-items: center;
+  margin: 36.000px 14.000px 0;
+  padding: 11.000px 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);}
+#fm-screen-float .quick-circle{flex: none;
+  width: 48.000px;
+  height: 48.000px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fdfeff 0%, #eef1f8 100%);
+  box-shadow: 0 4.000px 10.000px rgba(140, 160, 200, 0.16), inset 0 0 0 0.500px rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-float .quick-icon{width: 22.000px;
+  height: 22.000px;}
+#fm-screen-float .quick-texts{flex: 1;
+  margin-left: 11.000px;}
+#fm-screen-float .quick-title{display: block;
+  font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-float .quick-sub{display: block;
+  margin-top: 3.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-float .quick-chevron{width: 15.000px;
+  height: 15.000px;}
+#fm-screen-float .collapse{display: flex;
+  justify-content: center;
+  margin: 15.000px 0 3.000px;}
+#fm-screen-float .collapse-icon{width: 18.000px;
+  height: 18.000px;
+  opacity: 0.6;}
+#fm-screen-float .panel{margin: 6.000px 14.000px 0;
+  padding: 2.000px 13.000px;
+  border-radius: 12.000px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 5.000px 12.000px rgba(140, 160, 200, 0.12);}
+#fm-screen-float .panel-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 50.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-float .panel-row:last-child{border-bottom: none;}
+#fm-screen-float .panel-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-float .radio-left{display: flex;
+  flex-direction: column;}
+#fm-screen-float .radio-desc{margin-top: 3.000px;
+  font-size: 11.000px;
+  color: #98a0b3;}
+#fm-screen-float .sheet-btn{margin-top: 20.000px;}
+#fm-screen-float .ring{position: relative;}
+#fm-screen-float .ring-face{position: absolute;
+  left: 2.000px;
+  top: 2.000px;
+  right: 2.000px;
+  bottom: 2.000px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffffff 0%, #fbfcfe 45%, #e8ecf5 100%);
+  box-shadow: 0 7.000px 21.000px rgba(118, 136, 178, 0.30);}
+#fm-screen-float .ring-face-inner{position: absolute;
+  left: 16.750px;
+  top: 16.750px;
+  right: 16.750px;
+  bottom: 16.750px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 28%, #ffffff 0%, #f7f8fc 72%, #eef1f8 100%);}
+#fm-screen-float .ring-face-line{position: absolute;
+  left: 10.500px;
+  top: 10.500px;
+  right: 10.500px;
+  bottom: 10.500px;
+  border-radius: 50%;
+  border: 1.000px solid rgba(255, 255, 255, 0.85);}
+#fm-screen-float .ring-ticks,#fm-screen-float .ring-arc{position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: block;}
+#fm-screen-float .ring-center{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-float .ring-badge{width: 46.000px;
+  height: 46.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(180deg, #f2f4ff 0%, #e9ecfb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 13.000px;}
+#fm-screen-float .ring-badge-icon{width: 25.000px;
+  height: 25.000px;}
+#fm-screen-float .ring-time{font-size: 36.000px;
+  font-weight: 700;
+  color: #1b1f2a;
+  letter-spacing: 0.500px;
+  line-height: 1;}
+#fm-screen-float .ring-sub{margin-top: 10.000px;
+  font-size: 13.000px;
+  color: #98a0b3;
+  letter-spacing: 0.500px;}
+#fm-screen-float .float-pill{position: absolute;
+  z-index: 200;
+  box-sizing: border-box;
+  padding: 7.000px 10.000px 6.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(165deg, #4a5464 0%, #3c4553 45%, #333b48 100%);
+  box-shadow: 0 8.000px 18.000px rgba(10, 14, 24, 0.42), inset 0 0 0 0.500px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;}
+#fm-screen-float .fp-head{display: flex;
+  align-items: center;
+  justify-content: space-between;}
+#fm-screen-float .fp-head-left{display: flex;
+  align-items: center;}
+#fm-screen-float .fp-latency{flex: none;}
+#fm-screen-float .fp-click{display: flex;
+  align-items: center;
+  margin-left: 8.000px;}
+#fm-screen-float .fp-click-label{font-size: 11.000px;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.500px;}
+#fm-screen-float .fp-click-dot{width: 8.000px;
+  height: 8.000px;
+  border-radius: 50%;
+  margin-left: 4.000px;}
+#fm-screen-float .fp-click-dot-on{background: #37b24d;
+  box-shadow: 0 0 6.000px rgba(55, 178, 77, 0.95);}
+#fm-screen-float .fp-click-dot-off{background: #ef5b45;
+  box-shadow: 0 0 6.000px rgba(239, 91, 69, 0.85);}
+#fm-screen-float .fp-latency{font-size: 12.000px;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.500px;}
+#fm-screen-float .fp-source{font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.500px;}
+#fm-screen-float .fp-main{display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-top: 1.000px;}
+#fm-screen-float .fp-time{font-size: 30.000px;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 0.500px;
+  line-height: 1;}
+#fm-screen-float .fp-tenth{font-size: 34.000px;
+  font-weight: 700;
+  color: #ee5a2e;
+  line-height: 1;
+  margin-left: 1.000px;}
+#fm-screen-float .fp-bottom{width: 100%;
+  height: 31.000px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;}
+#fm-screen-float .fp-hide{display: none !important;}
+#fm-screen-float .fp-ruler-labels{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.000px;}
+#fm-screen-float .fp-ruler-label{font-size: 10.000px;
+  color: rgba(255, 255, 255, 0.55);}
+#fm-screen-float .fp-ruler-track{position: relative;
+  height: 3.000px;
+  margin-top: 4.000px;
+  border-radius: 1.500px;
+  background: rgba(255, 255, 255, 0.22);}
+#fm-screen-float .fp-ruler-fill{position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 1.500px;
+  background: linear-gradient(90deg, #d1553a, #ee5a2e);}
+#fm-screen-float .fp-ruler-knob{position: absolute;
+  top: 50%;
+  width: 9.000px;
+  height: 9.000px;
+  margin-left: -4.500px;
+  border-radius: 50%;
+  background: #ee5a2e;
+  border: 1.500px solid rgba(255, 255, 255, 0.85);
+  transform: translateY(-50%);
+  box-sizing: border-box;}
+#fm-screen-float .fp-perf{display: flex;
+  align-items: flex-end;
+  justify-content: space-between;}
+#fm-screen-float .fp-hz{font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);}
+#fm-screen-float .fp-net{display: flex;
+  flex-direction: column;
+  align-items: flex-end;}
+#fm-screen-float .fp-net-line{font-size: 11.000px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;}
+#fm-screen-float .tabbar-wrap{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0 12.000px calc(8.000px + env(safe-area-inset-bottom));}
+#fm-screen-float .tabbar-hide{display: none;}
+#fm-screen-float .tabbar{display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62.000px;
+  border-radius: 31.000px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6.000px 17.000px rgba(120, 140, 180, 0.22);
+  padding: 0 5.000px;}
+#fm-screen-float .tab-item{flex: 1 1 0;
+  max-width: 110.000px;
+  height: 50.000px;
+  margin: 0 3.000px;
+  border-radius: 15.000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-float .tab-on{background: linear-gradient(180deg, #e8f1ff 0%, #dfeafd 100%);}
+#fm-screen-float .tab-icon{width: 22.000px;
+  height: 22.000px;}
+#fm-screen-float .tab-text{margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #2c3140;
+  white-space: nowrap;}
+#fm-screen-float .tab-on .tab-text{color: #2f6fd0;
+  font-weight: 600;}
+#fm-screen-clicker,#fm-screen-clicker{margin: 0; padding: 0; width: 375px;}
+#fm-screen-clicker img{object-fit: contain; display: block;}
+#fm-screen-clicker .switch-el{-webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 12px; background: #e2e6ee; position: relative;}
+#fm-screen-clicker .switch-el:checked{background: #3b7ff0;}
+#fm-screen-clicker .switch-el::after{content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff;}
+#fm-screen-clicker .switch-el:checked::after{left: 20px;}
+#fm-screen-clicker{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#fm-screen-clicker .body{position: relative;
+  min-height: 812px;}
+#fm-screen-clicker .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#fm-screen-clicker .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#fm-screen-clicker .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#fm-screen-clicker .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#fm-screen-clicker .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#fm-screen-clicker .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#fm-screen-clicker .nav-gap{flex: 1;}
+#fm-screen-clicker .tap{opacity: 0.7;}
+#fm-screen-clicker .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#fm-screen-clicker .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clicker .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#fm-screen-clicker .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#fm-screen-clicker .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#fm-screen-clicker .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#fm-screen-clicker .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-clicker .row-item:last-child{border-bottom: none;}
+#fm-screen-clicker .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-clicker .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#fm-screen-clicker .switch-s{transform: scale(0.78);}
+#fm-screen-clicker .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#fm-screen-clicker .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#fm-screen-clicker .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#fm-screen-clicker .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#fm-screen-clicker .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-clicker .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#fm-screen-clicker .sheet-group{margin-top: 13.000px;}
+#fm-screen-clicker .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#fm-screen-clicker .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#fm-screen-clicker .radio-row:last-child{border-bottom: none;}
+#fm-screen-clicker .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-clicker .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#fm-screen-clicker .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#fm-screen-clicker .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-clicker .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-clicker .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#fm-screen-clicker .nav-title{font-size: 20.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-clicker .add-btn{height: 32.000px;
+  padding: 0 12.000px;
+  border-radius: 16.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 100%);
+  box-shadow: 0 4.000px 10.000px rgba(59, 127, 240, 0.28);
+  display: flex;
+  align-items: center;}
+#fm-screen-clicker .add-sym{font-size: 16.000px;
+  line-height: 1;
+  color: #ffffff;
+  margin-right: 3.000px;}
+#fm-screen-clicker .add-text{font-size: 13.000px;
+  font-weight: 600;
+  color: #ffffff;}
+#fm-screen-clicker .float-bar{margin: 9.000px 14.000px 0;
+  padding: 10.000px 12.000px;
+  border-radius: 11.000px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 5.000px 11.000px rgba(120, 150, 200, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;}
+#fm-screen-clicker .float-bar-left{display: flex;
+  align-items: center;
+  flex: 1;}
+#fm-screen-clicker .float-dot{flex: none;
+  width: 8.000px;
+  height: 8.000px;
+  border-radius: 50%;
+  margin-right: 7.000px;
+  background: #c2c8d4;}
+#fm-screen-clicker .float-bar-on{background: linear-gradient(135deg, #eaf7ee 0%, #dff1e5 100%);}
+#fm-screen-clicker .float-bar-on .float-dot{background: #37b24d;
+  box-shadow: 0 0 6.000px rgba(55, 178, 77, 0.7);}
+#fm-screen-clicker .float-bar-text{font-size: 13.000px;
+  color: #5a6478;}
+#fm-screen-clicker .float-bar-on .float-bar-text{color: #2b7a3f;
+  font-weight: 600;}
+#fm-screen-clicker .card-muted .task-time-main,#fm-screen-clicker .card-muted .task-sub-text,#fm-screen-clicker .card-muted .task-place{opacity: 0.42;}
+#fm-screen-clicker .card-muted .task-time-ms{opacity: 0.5;}
+#fm-screen-clicker .task-row{position: relative;
+  margin: 10.000px 14.000px 0;
+  border-radius: 10.000px;
+  overflow: hidden;}
+#fm-screen-clicker .task-delete{position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 84.000px;
+  background: linear-gradient(135deg, #ef5b45 0%, #e34d3b 100%);
+  color: #ffffff;
+  font-size: 15.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clicker .task-card{position: relative;
+  z-index: 2;
+  
+  padding: 14.000px 71.000px 14.000px 13.000px;
+  border-radius: 10.000px;
+  background: #ffffff;
+  box-shadow: 0 5.000px 12.000px rgba(120, 150, 200, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.22s ease;}
+#fm-screen-clicker .task-open{transform: translateX(-84.000px);}
+#fm-screen-clicker .task-left{flex: 1;}
+#fm-screen-clicker .task-time{display: flex;
+  align-items: baseline;}
+#fm-screen-clicker .task-time-text{flex: none;
+  width: 160.000px;
+  display: flex;
+  align-items: baseline;}
+#fm-screen-clicker .task-time-main{font-size: 23.000px;
+  font-weight: 600;
+  color: #1b1f2a;
+  letter-spacing: 0.500px;}
+#fm-screen-clicker .task-time-ms{font-size: 15.000px;
+  font-weight: 600;
+  color: #37b24d;
+  letter-spacing: 0.500px;}
+#fm-screen-clicker .task-place{flex: none;
+  width: 90.000px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+  font-size: 16.000px;
+  color: #6f7a91;
+  letter-spacing: 0.250px;}
+#fm-screen-clicker .task-sub{margin-top: 5.000px;
+  display: flex;
+  align-items: baseline;}
+#fm-screen-clicker .task-sub-text{flex: none;
+  width: 160.000px;
+  display: flex;
+  align-items: baseline;}
+#fm-screen-clicker .task-name{font-size: 13.000px;
+  color: #37b24d;}
+#fm-screen-clicker .task-repeat{margin-left: 7.000px;
+  font-size: 13.000px;
+  color: #8b93a7;}
+#fm-screen-clicker .cyl-switch{position: relative;
+  flex: none;
+  width: 48.000px;
+  height: 27.000px;
+  border-radius: 13.500px;
+  background: linear-gradient(180deg, #d7dde8 0%, #c9d2e0 100%);
+  box-shadow: inset 0 1.500px 3.500px rgba(60, 80, 120, 0.24), inset 0 -0.500px 0 rgba(255, 255, 255, 0.55);
+  transition: background 0.2s ease, box-shadow 0.2s ease;}
+#fm-screen-clicker .cyl-knob{position: absolute;
+  top: 2.000px;
+  left: 2.000px;
+  width: 23.000px;
+  height: 23.000px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffffff 0%, #eef1f7 100%);
+  box-shadow: 0 2.000px 5.000px rgba(30, 45, 80, 0.30), inset 0 -1.000px 2.000px rgba(40, 60, 100, 0.08);
+  transition: transform 0.2s ease;}
+#fm-screen-clicker .cyl-on{background: linear-gradient(180deg, #52cf6f 0%, #37b24d 100%);
+  box-shadow: inset 0 1.500px 3.500px rgba(20, 90, 40, 0.28), inset 0 -0.500px 0 rgba(255, 255, 255, 0.28);}
+#fm-screen-clicker .cyl-on .cyl-knob{transform: translateX(21.000px);}
+#fm-screen-clicker .task-right{flex: none;
+  margin-left: 10.000px;}
+#fm-screen-clicker .empty{margin: 40.000px 14.000px 0;
+  padding: 40.000px 0;
+  border-radius: 12.000px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.000px dashed rgba(140, 160, 200, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;}
+#fm-screen-clicker .empty-title{font-size: 15.000px;
+  color: #5a6478;}
+#fm-screen-clicker .empty-sub{margin-top: 5.000px;
+  font-size: 12.000px;
+  color: #98a0b3;}
+#fm-screen-clicker .time-preview{margin: 13.000px 0 4.000px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;}
+#fm-screen-clicker .time-main{font-size: 32.000px;
+  font-weight: 600;
+  color: #1b1f2a;
+  letter-spacing: 0.500px;}
+#fm-screen-clicker .time-ms{font-size: 22.000px;
+  font-weight: 600;
+  color: #37b24d;
+  letter-spacing: 0.500px;}
+#fm-screen-clicker .stepper-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#fm-screen-clicker .stepper-label{font-size: 13.000px;
+  color: #5a6478;}
+#fm-screen-clicker .stepper{display: flex;
+  align-items: center;
+  height: 30.000px;
+  border-radius: 15.000px;
+  background: #eef1f8;}
+#fm-screen-clicker .step-btn{width: 42.000px;
+  height: 30.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17.000px;
+  color: #2c3140;}
+#fm-screen-clicker .step-value{min-width: 44.000px;
+  text-align: center;
+  font-size: 15.000px;
+  font-weight: 600;
+  color: #1b1f2a;}
+#fm-screen-clicker .form-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#fm-screen-clicker .form-label{flex: none;
+  width: 80.000px;
+  font-size: 13.000px;
+  color: #5a6478;}
+#fm-screen-clicker .form-input{flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  text-align: right;}
+#fm-screen-clicker .ph{color: #b7bdc9;}
+#fm-screen-clicker .place-value{display: flex;
+  align-items: center;}
+#fm-screen-clicker .place-text{font-size: 14.000px;
+  color: #b0b7c4;}
+#fm-screen-clicker .place-tag{margin-left: 6.000px;
+  padding: 2.000px 7.000px;
+  border-radius: 9.000px;
+  font-size: 10.000px;
+  color: #8b93a7;
+  background: #f0f2f7;}
+#fm-screen-clicker .coord-wrap{margin-top: 10.000px;}
+#fm-screen-clicker .coord-head{display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#fm-screen-clicker .coord-title{font-size: 13.000px;
+  color: #5a6478;}
+#fm-screen-clicker .coord-hint{font-size: 11.000px;
+  color: #98a0b3;}
+#fm-screen-clicker .coord-panel{position: relative;
+  height: 160.000px;
+  border-radius: 10.000px;
+  background-color: #f7f9fc;
+  background-image: linear-gradient(to right, rgba(120, 150, 200, 0.18) 0.500px, transparent 0.500px),
+    linear-gradient(to bottom, rgba(120, 150, 200, 0.18) 0.500px, transparent 0.500px);
+  background-size: 10% 10%;
+  border: 0.500px solid rgba(140, 160, 200, 0.3);
+  overflow: hidden;}
+#fm-screen-clicker .coord-axis{position: absolute;
+  background: rgba(59, 127, 240, 0.25);}
+#fm-screen-clicker .coord-axis-x{left: 0;
+  right: 0;
+  top: 50%;
+  height: 0.500px;}
+#fm-screen-clicker .coord-axis-y{top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0.500px;}
+#fm-screen-clicker .coord-marker{position: absolute;
+  width: 0;
+  height: 0;}
+#fm-screen-clicker .coord-marker-dot{position: absolute;
+  left: -6.000px;
+  top: -6.000px;
+  width: 12.000px;
+  height: 12.000px;
+  border-radius: 50%;
+  background: #e34d3b;
+  border: 2.000px solid #ffffff;
+  box-shadow: 0 2.000px 6.000px rgba(227, 77, 59, 0.45);}
+#fm-screen-clicker .coord-corner{position: absolute;
+  font-size: 10.000px;
+  color: #a8b3c6;}
+#fm-screen-clicker .coord-tl{left: 5.000px;
+  top: 4.000px;}
+#fm-screen-clicker .coord-br{right: 5.000px;
+  bottom: 4.000px;}
+#fm-screen-clicker .pick-btn{margin-top: 8.000px;
+  height: 40.000px;
+  border-radius: 10.000px;
+  background: #eef2fa;
+  color: #2f6fd0;
+  font-size: 14.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clicker .place-on{color: #2f6fd0;
+  font-weight: 600;}
+#fm-screen-clicker .pick-mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 320;
+  background: rgba(18, 24, 38, 0.42);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clicker .pick-tip{font-size: 16.000px;
+  color: #ffffff;
+  font-weight: 600;}
+#fm-screen-clicker .pick-sub{margin-top: 6.000px;
+  font-size: 12.000px;
+  color: rgba(255, 255, 255, 0.7);}
+#fm-screen-clicker .pick-cancel{margin-top: 20.000px;
+  padding: 8.000px 28.000px;
+  border-radius: 20.000px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1b1f2a;
+  font-size: 14.000px;}
+#fm-screen-clicker .sheet-actions{display: flex;
+  align-items: center;
+  margin-top: 18.000px;}
+#fm-screen-clicker .danger-btn{flex: none;
+  height: 48.000px;
+  padding: 0 20.000px;
+  margin-right: 10.000px;
+  border-radius: 12.000px;
+  background: #fdecea;
+  color: #e34d3b;
+  font-size: 15.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clicker .sheet-btn{flex: 1;
+  margin: 0;
+  height: 48.000px;}
+#fm-screen-clicker .page-body{padding-bottom: 120.000px;}
+#fm-screen-clicker .tabbar-wrap{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0 12.000px calc(8.000px + env(safe-area-inset-bottom));}
+#fm-screen-clicker .tabbar-hide{display: none;}
+#fm-screen-clicker .tabbar{display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62.000px;
+  border-radius: 31.000px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6.000px 17.000px rgba(120, 140, 180, 0.22);
+  padding: 0 5.000px;}
+#fm-screen-clicker .tab-item{flex: 1 1 0;
+  max-width: 110.000px;
+  height: 50.000px;
+  margin: 0 3.000px;
+  border-radius: 15.000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-clicker .tab-on{background: linear-gradient(180deg, #e8f1ff 0%, #dfeafd 100%);}
+#fm-screen-clicker .tab-icon{width: 22.000px;
+  height: 22.000px;}
+#fm-screen-clicker .tab-text{margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #2c3140;
+  white-space: nowrap;}
+#fm-screen-clicker .tab-on .tab-text{color: #2f6fd0;
+  font-weight: 600;}
+#fm-screen-events,#fm-screen-events{margin: 0; padding: 0; width: 375px;}
+#fm-screen-events img{object-fit: contain; display: block;}
+#fm-screen-events .switch-el{-webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 12px; background: #e2e6ee; position: relative;}
+#fm-screen-events .switch-el:checked{background: #3b7ff0;}
+#fm-screen-events .switch-el::after{content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff;}
+#fm-screen-events .switch-el:checked::after{left: 20px;}
+#fm-screen-events{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#fm-screen-events .body{position: relative;
+  min-height: 812px;}
+#fm-screen-events .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#fm-screen-events .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#fm-screen-events .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#fm-screen-events .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#fm-screen-events .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#fm-screen-events .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#fm-screen-events .nav-gap{flex: 1;}
+#fm-screen-events .tap{opacity: 0.7;}
+#fm-screen-events .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#fm-screen-events .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-events .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#fm-screen-events .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#fm-screen-events .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#fm-screen-events .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#fm-screen-events .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-events .row-item:last-child{border-bottom: none;}
+#fm-screen-events .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-events .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#fm-screen-events .switch-s{transform: scale(0.78);}
+#fm-screen-events .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#fm-screen-events .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#fm-screen-events .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#fm-screen-events .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#fm-screen-events .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-events .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#fm-screen-events .sheet-group{margin-top: 13.000px;}
+#fm-screen-events .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#fm-screen-events .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#fm-screen-events .radio-row:last-child{border-bottom: none;}
+#fm-screen-events .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-events .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#fm-screen-events .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#fm-screen-events .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-events .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-events .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#fm-screen-events .nav-title{font-size: 20.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-events .back-btn{width: 36.000px;
+  height: 36.000px;
+  border-radius: 50%;
+  margin-right: 6.000px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 3.000px 8.000px rgba(140, 160, 200, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-events .back-icon{width: 20.000px;
+  height: 20.000px;}
+#fm-screen-events .add-btn{height: 32.000px;
+  padding: 0 12.000px;
+  border-radius: 16.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 100%);
+  box-shadow: 0 4.000px 10.000px rgba(59, 127, 240, 0.28);
+  display: flex;
+  align-items: center;}
+#fm-screen-events .add-text{font-size: 13.000px;
+  color: #ffffff;
+  font-weight: 600;}
+#fm-screen-events .hint{margin: 11.000px 16.000px 0;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-events .ev-card{margin: 9.000px 14.000px 0;
+  padding: 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);}
+#fm-screen-events .ev-active{background: linear-gradient(150deg, #eef6fe 0%, #e6eefd 100%);
+  box-shadow: 0 6.000px 14.000px rgba(90, 150, 240, 0.18);}
+#fm-screen-events .ev-top{display: flex;
+  align-items: center;}
+#fm-screen-events .ev-tag{flex: none;
+  height: 18.000px;
+  line-height: 18.000px;
+  padding: 0 7.000px;
+  margin-right: 7.000px;
+  border-radius: 5.000px;
+  font-size: 10.000px;
+  color: #2f6fd0;
+  background: rgba(90, 150, 240, 0.12);}
+#fm-screen-events .ev-title{flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;}
+#fm-screen-events .ev-mid{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8.000px;}
+#fm-screen-events .ev-price{font-size: 18.000px;
+  font-weight: 700;
+  color: #ff6a00;}
+#fm-screen-events .ev-badge{font-size: 11.000px;
+  color: #2f6fd0;
+  padding: 2.000px 7.000px;
+  border-radius: 10.000px;
+  background: rgba(90, 150, 240, 0.14);}
+#fm-screen-events .ev-foot{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 7.000px;}
+#fm-screen-events .ev-target{font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-events .ev-digits{display: flex;
+  align-items: center;}
+#fm-screen-events .ev-digit{min-width: 22.000px;
+  text-align: center;
+  font-size: 14.000px;
+  font-weight: 700;
+  color: #1b1f2a;}
+#fm-screen-events .ev-digit-last{margin-left: 5.000px;
+  color: #2f6fd0;}
+#fm-screen-events .ev-colon{margin: 0 2.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-events .ev-actions{display: flex;
+  align-items: center;
+  margin-top: 10.000px;
+  padding-top: 9.000px;
+  border-top: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-events .ev-action{flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28.000px;}
+#fm-screen-events .ev-action-icon{width: 15.000px;
+  height: 15.000px;
+  margin-right: 4.000px;}
+#fm-screen-events .ev-action-text{font-size: 12.000px;
+  color: #5a6478;}
+#fm-screen-events .form-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-events .form-label{flex: none;
+  width: 84.000px;
+  font-size: 13.000px;
+  color: #5a6478;}
+#fm-screen-events .form-input{flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  text-align: right;}
+#fm-screen-events .ph{color: #b7bdc9;}
+#fm-screen-events .form-picker{font-size: 14.000px;
+  color: #2f6fd0;
+  font-weight: 600;}
+#fm-screen-events .tag-list{display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;}
+#fm-screen-events .tag{padding: 4.000px 10.000px;
+  margin: 3.000px 0 3.000px 7.000px;
+  border-radius: 11.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  background: #f0f2f7;}
+#fm-screen-events .tag-on{color: #2f6fd0;
+  background: rgba(90, 150, 240, 0.16);
+  font-weight: 600;}
+#fm-screen-events .sheet-btn{margin-top: 20.000px;}
+#fm-screen-events .page-body{padding-bottom: 40.000px;}
+#fm-screen-timeSource,#fm-screen-timeSource{margin: 0; padding: 0; width: 375px;}
+#fm-screen-timeSource img{object-fit: contain; display: block;}
+#fm-screen-timeSource .switch-el{-webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 12px; background: #e2e6ee; position: relative;}
+#fm-screen-timeSource .switch-el:checked{background: #3b7ff0;}
+#fm-screen-timeSource .switch-el::after{content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff;}
+#fm-screen-timeSource .switch-el:checked::after{left: 20px;}
+#fm-screen-timeSource{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#fm-screen-timeSource .body{position: relative;
+  min-height: 812px;}
+#fm-screen-timeSource .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#fm-screen-timeSource .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#fm-screen-timeSource .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#fm-screen-timeSource .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#fm-screen-timeSource .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#fm-screen-timeSource .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#fm-screen-timeSource .nav-gap{flex: 1;}
+#fm-screen-timeSource .tap{opacity: 0.7;}
+#fm-screen-timeSource .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#fm-screen-timeSource .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-timeSource .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#fm-screen-timeSource .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#fm-screen-timeSource .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#fm-screen-timeSource .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#fm-screen-timeSource .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-timeSource .row-item:last-child{border-bottom: none;}
+#fm-screen-timeSource .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-timeSource .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#fm-screen-timeSource .switch-s{transform: scale(0.78);}
+#fm-screen-timeSource .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#fm-screen-timeSource .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#fm-screen-timeSource .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#fm-screen-timeSource .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#fm-screen-timeSource .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-timeSource .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#fm-screen-timeSource .sheet-group{margin-top: 13.000px;}
+#fm-screen-timeSource .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#fm-screen-timeSource .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#fm-screen-timeSource .radio-row:last-child{border-bottom: none;}
+#fm-screen-timeSource .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-timeSource .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#fm-screen-timeSource .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#fm-screen-timeSource .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-timeSource .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-timeSource .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#fm-screen-timeSource .nav-title{font-size: 20.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-timeSource .back-btn{width: 36.000px;
+  height: 36.000px;
+  border-radius: 50%;
+  margin-right: 6.000px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 3.000px 8.000px rgba(140, 160, 200, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-timeSource .back-icon{width: 20.000px;
+  height: 20.000px;}
+#fm-screen-timeSource .help-btn{width: 32.000px;
+  height: 32.000px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 3.000px 8.000px rgba(140, 160, 200, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-timeSource .help-sym{font-size: 16.000px;
+  font-weight: 700;
+  color: #5a6478;}
+#fm-screen-timeSource .section-title{margin: 13.000px 16.000px 6.000px;
+  font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-timeSource .stepper-card{margin: 0 14.000px;
+  padding: 11.000px 11.000px 11.000px 14.000px;
+  border-radius: 13.000px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 6.000px 13.000px rgba(120, 150, 200, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;}
+#fm-screen-timeSource .stepper-left{display: flex;
+  flex-direction: column;}
+#fm-screen-timeSource .stepper-title{font-size: 15.000px;
+  color: #2c3140;}
+#fm-screen-timeSource .stepper-value{margin-top: 3.000px;
+  font-size: 11.000px;
+  color: #98a0b3;}
+#fm-screen-timeSource .stepper{display: flex;
+  align-items: center;
+  height: 32.000px;
+  border-radius: 16.000px;
+  background: #eef1f8;}
+#fm-screen-timeSource .step-btn{width: 46.000px;
+  height: 32.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-timeSource .step-sym{font-size: 19.000px;
+  color: #2c3140;}
+#fm-screen-timeSource .step-div{width: 0.500px;
+  height: 17.000px;
+  background: rgba(150, 165, 200, 0.5);}
+#fm-screen-timeSource .grid{display: flex;
+  flex-wrap: wrap;
+  padding: 0 9.000px;}
+#fm-screen-timeSource .src-card{width: calc(50% - 10.000px);
+  margin: 5.000px;
+  padding: 10.000px;
+  border-radius: 12.000px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 5.000px 11.000px rgba(120, 150, 200, 0.10);
+  border: 1.000px solid transparent;}
+#fm-screen-timeSource .src-active{background: linear-gradient(150deg, #eef6ff 0%, #e3eefd 100%);
+  border-color: #7fb4f5;
+  box-shadow: 0 6.000px 13.000px rgba(90, 150, 240, 0.22);}
+#fm-screen-timeSource .src-head{display: flex;
+  align-items: center;}
+#fm-screen-timeSource .src-badge{flex: none;
+  min-width: 23.000px;
+  height: 23.000px;
+  padding: 0 4.000px;
+  border-radius: 6.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-timeSource .src-badge-text{font-size: 9.000px;
+  font-weight: 700;
+  color: #ffffff;}
+#fm-screen-timeSource .src-name{flex: 1;
+  margin-left: 7.000px;
+  font-size: 13.500px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;}
+#fm-screen-timeSource .src-sync{flex: none;
+  width: 26.000px;
+  height: 26.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-timeSource .src-sync-icon{width: 17.000px;
+  height: 17.000px;}
+#fm-screen-timeSource .src-time{display: block;
+  margin-top: 8.000px;
+  font-size: 15.000px;
+  font-weight: 700;
+  color: #1b1f2a;}
+#fm-screen-timeSource .src-desc{display: block;
+  margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #8b93a7;}
+#fm-screen-timeSource .src-add{display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90.000px;
+  border: 1.000px dashed rgba(140, 160, 200, 0.42);
+  background: rgba(255, 255, 255, 0.5);}
+#fm-screen-timeSource .add-sym{font-size: 26.000px;
+  color: #b7c3d6;}
+#fm-screen-timeSource .status-bar{display: flex;
+  align-items: center;
+  margin: 15.000px 11.000px 0;
+  padding: 9.000px 7.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);}
+#fm-screen-timeSource .status-card{flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;}
+#fm-screen-timeSource .status-right{border-radius: 10.000px;
+  padding: 6.000px 3.000px;
+  background: rgba(255, 236, 232, 0.9);}
+#fm-screen-timeSource .status-badge{width: 30.000px;
+  height: 30.000px;
+  border-radius: 50%;
+  background: #e23c3c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-timeSource .status-badge-text{font-size: 7.500px;
+  line-height: 1.1;
+  color: #ffffff;
+  font-weight: 700;}
+#fm-screen-timeSource .status-name{margin-top: 4.000px;
+  font-size: 12.000px;
+  color: #2c3140;}
+#fm-screen-timeSource .status-sub{margin-top: 2.000px;
+  font-size: 10.000px;
+  color: #98a0b3;}
+#fm-screen-timeSource .status-mid{display: flex;
+  align-items: center;
+  padding: 0 4.000px;}
+#fm-screen-timeSource .status-arrow{font-size: 15.000px;
+  color: #c2ccdb;}
+#fm-screen-timeSource .status-check{width: 17.000px;
+  height: 17.000px;
+  margin: 0 3.000px;
+  border-radius: 50%;
+  background: #2fbf5b;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-timeSource .check-sym{font-size: 10.000px;
+  color: #ffffff;
+  font-weight: 700;}
+#fm-screen-timeSource .status-text{margin-left: 5.000px;
+  font-size: 12.000px;
+  color: #2c3140;}
+#fm-screen-timeSource .status-icon{width: 17.000px;
+  height: 17.000px;}
+#fm-screen-timeSource .status-time{margin-top: 3.000px;
+  font-size: 12.000px;
+  font-weight: 700;
+  color: #1b1f2a;}
+#fm-screen-timeSource .page-body{padding-bottom: 30.000px;}
+#fm-screen-mine,#fm-screen-mine{margin: 0; padding: 0; width: 375px;}
+#fm-screen-mine img{object-fit: contain; display: block;}
+#fm-screen-mine .switch-el{-webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 12px; background: #e2e6ee; position: relative;}
+#fm-screen-mine .switch-el:checked{background: #3b7ff0;}
+#fm-screen-mine .switch-el::after{content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff;}
+#fm-screen-mine .switch-el:checked::after{left: 20px;}
+#fm-screen-mine{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#fm-screen-mine .body{position: relative;
+  min-height: 812px;}
+#fm-screen-mine .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#fm-screen-mine .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#fm-screen-mine .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#fm-screen-mine .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#fm-screen-mine .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#fm-screen-mine .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#fm-screen-mine .nav-gap{flex: 1;}
+#fm-screen-mine .tap{opacity: 0.7;}
+#fm-screen-mine .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#fm-screen-mine .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-mine .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#fm-screen-mine .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#fm-screen-mine .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#fm-screen-mine .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#fm-screen-mine .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#fm-screen-mine .row-item:last-child{border-bottom: none;}
+#fm-screen-mine .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-mine .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#fm-screen-mine .switch-s{transform: scale(0.78);}
+#fm-screen-mine .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#fm-screen-mine .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#fm-screen-mine .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#fm-screen-mine .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#fm-screen-mine .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-mine .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#fm-screen-mine .sheet-group{margin-top: 13.000px;}
+#fm-screen-mine .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#fm-screen-mine .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#fm-screen-mine .radio-row:last-child{border-bottom: none;}
+#fm-screen-mine .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#fm-screen-mine .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#fm-screen-mine .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#fm-screen-mine .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-mine .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#fm-screen-mine .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#fm-screen-mine .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-mine .profile{display: flex;
+  align-items: center;
+  margin: 11.000px 14.000px 0;
+  padding: 15.000px 13.000px;
+  border-radius: 15.000px;
+  background: linear-gradient(150deg, #eef6fe 0%, #e8f0fd 60%, #eaf1fb 100%);
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.14);}
+#fm-screen-mine .avatar{flex: none;
+  width: 52.000px;
+  height: 52.000px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #6cb0f8 0%, #3b7ff0 100%);
+  box-shadow: 0 5.000px 11.000px rgba(59, 127, 240, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-mine .avatar-icon{width: 28.000px;
+  height: 28.000px;}
+#fm-screen-mine .profile-info{flex: 1;
+  margin-left: 11.000px;}
+#fm-screen-mine .profile-name{display: block;
+  font-size: 16.000px;
+  font-weight: 700;
+  color: #16181f;}
+#fm-screen-mine .profile-sub{display: block;
+  margin-top: 5.000px;
+  font-size: 11.000px;
+  color: #8b93a7;}
+#fm-screen-mine .group{margin: 11.000px 14.000px 0;
+  padding: 2.000px 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.10);}
+#fm-screen-mine .row-left{display: flex;
+  align-items: center;}
+#fm-screen-mine .row-icon{width: 20.000px;
+  height: 20.000px;
+  margin-right: 8.000px;}
+#fm-screen-mine .row-right{display: flex;
+  align-items: center;}
+#fm-screen-mine .row-chevron{width: 13.000px;
+  height: 13.000px;
+  margin-left: 4.000px;}
+#fm-screen-mine .footer{margin: 20.000px 0 0;
+  text-align: center;
+  font-size: 11.000px;
+  color: #a8afbd;}
+#fm-screen-mine .page-body{padding-bottom: 120.000px;}
+#fm-screen-mine .tabbar-wrap{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0 12.000px calc(8.000px + env(safe-area-inset-bottom));}
+#fm-screen-mine .tabbar-hide{display: none;}
+#fm-screen-mine .tabbar{display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62.000px;
+  border-radius: 31.000px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6.000px 17.000px rgba(120, 140, 180, 0.22);
+  padding: 0 5.000px;}
+#fm-screen-mine .tab-item{flex: 1 1 0;
+  max-width: 110.000px;
+  height: 50.000px;
+  margin: 0 3.000px;
+  border-radius: 15.000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#fm-screen-mine .tab-on{background: linear-gradient(180deg, #e8f1ff 0%, #dfeafd 100%);}
+#fm-screen-mine .tab-icon{width: 22.000px;
+  height: 22.000px;}
+#fm-screen-mine .tab-text{margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #2c3140;
+  white-space: nowrap;}
+#fm-screen-mine .tab-on .tab-text{color: #2f6fd0;
+  font-weight: 600;}
+</style>
+</head>
+<body>
+<div id="fx-wrap">
+  <div id="fx-head">悬浮时钟 · 四个页面</div>
+<div id="fm-root">
+
+  <div id="fm-bar">
+    <button type="button" data-target="clock" class="fm-on">首页</button>
+    <button type="button" data-target="float">悬浮窗</button>
+    <button type="button" data-target="clicker">点击</button>
+    <button type="button" data-target="events">抢购事件</button>
+    <button type="button" data-target="timeSource">时间源</button>
+    <button type="button" data-target="mine">我的</button>
+  </div>
+  <div id="fm-holder">
+    <div id="fm-frame">
+      <div class="fm-screen" id="fm-screen-clock" data-page="clock"><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:24px;height:44px;"><div class="nav-row" style="padding-right:108px;"><span class="nav-title">悬浮时钟</span></div></div><div class="page-body"><div class="event-card card-normal"><div class="ribbon"><img class="ribbon-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIuNyAzYy45IDMuMS0yLjMgNC4yLTIuMyA2LjQgMCAxLjEuOCAyIDEuOCAyIDEuNSAwIDIuNC0xLjUgMi4xLTMuMiAyLjQgMS44IDMuOCA0LjEgMy44IDYuNSAwIDMuNC0yLjggNi4yLTYuMiA2LjJzLTYuMi0yLjgtNi4yLTYuMkM1LjcgMTAuMSAxMC4zIDggMTIuNyAzWiIgZmlsbD0iIzRhYThmMCIvPjwvc3ZnPg=="></div><div class="event-head"><div class="event-thumb"><img class="event-thumb-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj48cmVjdCB4PSIzLjYiIHk9IjUuMiIgd2lkdGg9IjE2LjgiIGhlaWdodD0iMTMuNiIgcng9IjIuOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxwYXRoIGQ9Ik0zLjYgOS44aDE2LjgiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxLjgiLz48cGF0aCBkPSJNNy40IDEzLjhoNiIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><span class="event-title">【淘宝】茅台（MOUTAI）飞天 53%vol 500ml 贵州茅台酒</span></div><div class="event-mid"><div class="price"><span class="price-sym">¥</span><span class="price-num mono">1499.00</span></div><span class="cd-label">倒计时</span></div><div class="event-foot"><span class="event-target">1天后 20:00:00</span><div class="digits"><div class="digit mono">23</div><span class="colon">:</span><div class="digit mono">53</div><span class="colon">:</span><div class="digit mono">37</div><div class="digit digit-last mono">5</div></div></div></div><div class="ring-wrap"><div class="ring" style="width:250.000px;height:250.000px;"><div class="ring-face"></div><div class="ring-face-inner"></div><div class="ring-face-line"></div><img class="ring-ticks" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cline x1='250' y1='8.43' x2='250' y2='23.68' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='275.25' y1='9.75' x2='274.33' y2='18.56' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='300.23' y1='13.71' x2='298.38' y2='22.37' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='324.65' y1='20.25' x2='321.91' y2='28.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='348.26' y1='29.31' x2='344.65' y2='37.4' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='370.79' y1='40.79' x2='363.16' y2='54' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='391.99' y1='54.56' x2='386.79' y2='61.73' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='411.64' y1='70.48' x2='405.72' y2='77.06' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='429.52' y1='88.36' x2='422.94' y2='94.28' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='445.44' y1='108.01' x2='438.27' y2='113.21' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='459.21' y1='129.21' x2='446' y2='136.84' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='470.69' y1='151.74' x2='462.6' y2='155.35' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='479.75' y1='175.35' x2='471.33' y2='178.09' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='486.29' y1='199.77' x2='477.63' y2='201.62' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='490.25' y1='224.75' x2='481.44' y2='225.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='491.57' y1='250' x2='476.32' y2='250' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='490.25' y1='275.25' x2='481.44' y2='274.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='486.29' y1='300.23' x2='477.63' y2='298.38' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='479.75' y1='324.65' x2='471.33' y2='321.91' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='470.69' y1='348.26' x2='462.6' y2='344.65' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='459.21' y1='370.79' x2='446' y2='363.16' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='445.44' y1='391.99' x2='438.27' y2='386.79' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='429.52' y1='411.64' x2='422.94' y2='405.72' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='411.64' y1='429.52' x2='405.72' y2='422.94' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='391.99' y1='445.44' x2='386.79' y2='438.27' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='370.79' y1='459.21' x2='363.16' y2='446' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='348.26' y1='470.69' x2='344.65' y2='462.6' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='324.65' y1='479.75' x2='321.91' y2='471.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='300.23' y1='486.29' x2='298.38' y2='477.63' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='275.25' y1='490.25' x2='274.33' y2='481.44' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='250' y1='491.57' x2='250' y2='476.32' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='224.75' y1='490.25' x2='225.67' y2='481.44' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='199.77' y1='486.29' x2='201.62' y2='477.63' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='175.35' y1='479.75' x2='178.09' y2='471.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='151.74' y1='470.69' x2='155.35' y2='462.6' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='129.21' y1='459.21' x2='136.84' y2='446' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='108.01' y1='445.44' x2='113.21' y2='438.27' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='88.36' y1='429.52' x2='94.28' y2='422.94' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='70.48' y1='411.64' x2='77.06' y2='405.72' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='54.56' y1='391.99' x2='61.73' y2='386.79' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='40.79' y1='370.79' x2='54' y2='363.16' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='29.31' y1='348.26' x2='37.4' y2='344.65' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='20.25' y1='324.65' x2='28.67' y2='321.91' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='13.71' y1='300.23' x2='22.37' y2='298.38' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='9.75' y1='275.25' x2='18.56' y2='274.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='8.43' y1='250' x2='23.68' y2='250' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='9.75' y1='224.75' x2='18.56' y2='225.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='13.71' y1='199.77' x2='22.37' y2='201.62' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='20.25' y1='175.35' x2='28.67' y2='178.09' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='29.31' y1='151.74' x2='37.4' y2='155.35' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='40.79' y1='129.21' x2='54' y2='136.84' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='54.56' y1='108.01' x2='61.73' y2='113.21' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='70.48' y1='88.36' x2='77.06' y2='94.28' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='88.36' y1='70.48' x2='94.28' y2='77.06' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='108.01' y1='54.56' x2='113.21' y2='61.73' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='129.21' y1='40.79' x2='136.84' y2='54' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='151.74' y1='29.31' x2='155.35' y2='37.4' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='175.35' y1='20.25' x2='178.09' y2='28.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='199.77' y1='13.71' x2='201.62' y2='22.37' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='224.75' y1='9.75' x2='225.67' y2='18.56' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='250' cy='21.22' r='5.41' fill='rgb(79,212,232)'/%3E%3Ccircle cx='478.78' cy='250' r='5.41' fill='rgb(139,124,224)'/%3E%3Ccircle cx='250' cy='478.78' r='5.41' fill='rgb(79,212,232)'/%3E%3Ccircle cx='21.22' cy='250' r='5.41' fill='rgb(242,162,184)'/%3E%3C/svg%3E"><img class="ring-arc" id="ring-clock" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cdefs%3E%3ClinearGradient id='g' gradientUnits='userSpaceOnUse' x1='4' y1='4' x2='422.2' y2='496'%3E%3Cstop offset='0' stop-color='rgb(198,205,246)'/%3E%3Cstop offset='0.5' stop-color='rgb(180,189,242)'/%3E%3Cstop offset='1' stop-color='rgb(163,175,240)'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M 250 37.95 A 212.05 212.05 0 0 1 399.94 399.94' fill='none' stroke='url(%23g)' stroke-width='6.4' stroke-linecap='round'/%3E%3C/svg%3E"><div class="ring-center"><div class="ring-badge"><img class="ring-badge-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU0IiBoZWlnaHQ9IjU0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEzLjEiIHI9IjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIvPjxwYXRoIGQ9Ik0xMiA5Ljl2My40bDIuMyAxLjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhmOTVjNiIgc3Ryb2tlLXdpZHRoPSIxLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik00LjMgNi4zIDYuNiA0TTE5LjcgNi4zIDE3LjQgNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><div class="ring-time mono">20:06:22.5</div><div class="ring-sub">北京时间</div></div></div></div><div class="quick-panel"><div class="quick-circle"><img class="quick-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTkuNiAxMmE3LjYgNy42IDAgMSAxLTIuNS01LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuNnY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTIgOC42djMuNmwyLjggMS43IiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="quick-texts"><span class="quick-title">时间源</span><span class="quick-sub">北京时间</span></div><img class="quick-chevron" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIj48cGF0aCBkPSJNOS44IDUuNiAxNS40IDEybC01LjYgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiNiN2JkYzkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+"></div><div class="collapse"><img class="collapse-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM4IiBoZWlnaHQ9IjM4Ij48cGF0aCBkPSJNNi4yIDE0LjQgMTIgOC44bDUuOCA1LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzdjODQ5NyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="primary-btn">
+      开启悬浮窗
+    </div></div></div><div class="tabbar-wrap "><div class="tabbar"><div class="tab-item tab-on" data-index="0"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="tab-text">时钟</span></div><div class="tab-item " data-index="1"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48cGF0aCBkPSJNOC40IDMuMiAxNy42IDEyLjRsLTQuNi42LTIuNCA0LjR6IiBmaWxsPSIjMmMzMTQwIi8+PHBhdGggZD0iTTE1LjQgMTUuMmMuOSAxLjEgMS40IDIuNCAxLjQgMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTguNCAxMy4yYzEuNiAxLjkgMi41IDQuMSAyLjUgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">点击</span></div><div class="tab-item " data-index="2"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">我的</span></div></div></div></div>
+      <div class="fm-screen" id="fm-screen-float" data-page="float"><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:24px;height:44px;"><div class="nav-row" style="padding-right:108px;"><span class="nav-title">悬浮时钟</span></div></div><div class="page-body"><div class="event-card card-normal"><div class="ribbon"><img class="ribbon-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIuNyAzYy45IDMuMS0yLjMgNC4yLTIuMyA2LjQgMCAxLjEuOCAyIDEuOCAyIDEuNSAwIDIuNC0xLjUgMi4xLTMuMiAyLjQgMS44IDMuOCA0LjEgMy44IDYuNSAwIDMuNC0yLjggNi4yLTYuMiA2LjJzLTYuMi0yLjgtNi4yLTYuMkM1LjcgMTAuMSAxMC4zIDggMTIuNyAzWiIgZmlsbD0iIzRhYThmMCIvPjwvc3ZnPg=="></div><div class="event-head"><div class="event-thumb"><img class="event-thumb-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj48cmVjdCB4PSIzLjYiIHk9IjUuMiIgd2lkdGg9IjE2LjgiIGhlaWdodD0iMTMuNiIgcng9IjIuOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxwYXRoIGQ9Ik0zLjYgOS44aDE2LjgiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxLjgiLz48cGF0aCBkPSJNNy40IDEzLjhoNiIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><span class="event-title">【淘宝】茅台（MOUTAI）飞天 53%vol 500ml 贵州茅台酒</span></div><div class="event-mid"><div class="price"><span class="price-sym">¥</span><span class="price-num mono">1499.00</span></div><span class="cd-label">倒计时</span></div><div class="event-foot"><span class="event-target">1天后 20:00:00</span><div class="digits"><div class="digit mono">23</div><span class="colon">:</span><div class="digit mono">53</div><span class="colon">:</span><div class="digit mono">37</div><div class="digit digit-last mono">5</div></div></div></div><div class="ring-wrap"><div class="ring" style="width:250.000px;height:250.000px;"><div class="ring-face"></div><div class="ring-face-inner"></div><div class="ring-face-line"></div><img class="ring-ticks" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cline x1='250' y1='8.43' x2='250' y2='23.68' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='275.25' y1='9.75' x2='274.33' y2='18.56' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='300.23' y1='13.71' x2='298.38' y2='22.37' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='324.65' y1='20.25' x2='321.91' y2='28.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='348.26' y1='29.31' x2='344.65' y2='37.4' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='370.79' y1='40.79' x2='363.16' y2='54' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='391.99' y1='54.56' x2='386.79' y2='61.73' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='411.64' y1='70.48' x2='405.72' y2='77.06' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='429.52' y1='88.36' x2='422.94' y2='94.28' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='445.44' y1='108.01' x2='438.27' y2='113.21' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='459.21' y1='129.21' x2='446' y2='136.84' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='470.69' y1='151.74' x2='462.6' y2='155.35' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='479.75' y1='175.35' x2='471.33' y2='178.09' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='486.29' y1='199.77' x2='477.63' y2='201.62' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='490.25' y1='224.75' x2='481.44' y2='225.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='491.57' y1='250' x2='476.32' y2='250' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='490.25' y1='275.25' x2='481.44' y2='274.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='486.29' y1='300.23' x2='477.63' y2='298.38' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='479.75' y1='324.65' x2='471.33' y2='321.91' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='470.69' y1='348.26' x2='462.6' y2='344.65' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='459.21' y1='370.79' x2='446' y2='363.16' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='445.44' y1='391.99' x2='438.27' y2='386.79' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='429.52' y1='411.64' x2='422.94' y2='405.72' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='411.64' y1='429.52' x2='405.72' y2='422.94' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='391.99' y1='445.44' x2='386.79' y2='438.27' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='370.79' y1='459.21' x2='363.16' y2='446' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='348.26' y1='470.69' x2='344.65' y2='462.6' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='324.65' y1='479.75' x2='321.91' y2='471.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='300.23' y1='486.29' x2='298.38' y2='477.63' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='275.25' y1='490.25' x2='274.33' y2='481.44' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='250' y1='491.57' x2='250' y2='476.32' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='224.75' y1='490.25' x2='225.67' y2='481.44' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='199.77' y1='486.29' x2='201.62' y2='477.63' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='175.35' y1='479.75' x2='178.09' y2='471.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='151.74' y1='470.69' x2='155.35' y2='462.6' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='129.21' y1='459.21' x2='136.84' y2='446' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='108.01' y1='445.44' x2='113.21' y2='438.27' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='88.36' y1='429.52' x2='94.28' y2='422.94' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='70.48' y1='411.64' x2='77.06' y2='405.72' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='54.56' y1='391.99' x2='61.73' y2='386.79' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='40.79' y1='370.79' x2='54' y2='363.16' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='29.31' y1='348.26' x2='37.4' y2='344.65' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='20.25' y1='324.65' x2='28.67' y2='321.91' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='13.71' y1='300.23' x2='22.37' y2='298.38' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='9.75' y1='275.25' x2='18.56' y2='274.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='8.43' y1='250' x2='23.68' y2='250' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='9.75' y1='224.75' x2='18.56' y2='225.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='13.71' y1='199.77' x2='22.37' y2='201.62' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='20.25' y1='175.35' x2='28.67' y2='178.09' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='29.31' y1='151.74' x2='37.4' y2='155.35' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='40.79' y1='129.21' x2='54' y2='136.84' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='54.56' y1='108.01' x2='61.73' y2='113.21' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='70.48' y1='88.36' x2='77.06' y2='94.28' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='88.36' y1='70.48' x2='94.28' y2='77.06' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='108.01' y1='54.56' x2='113.21' y2='61.73' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='129.21' y1='40.79' x2='136.84' y2='54' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='151.74' y1='29.31' x2='155.35' y2='37.4' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='175.35' y1='20.25' x2='178.09' y2='28.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='199.77' y1='13.71' x2='201.62' y2='22.37' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='224.75' y1='9.75' x2='225.67' y2='18.56' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='250' cy='21.22' r='5.41' fill='rgb(79,212,232)'/%3E%3Ccircle cx='478.78' cy='250' r='5.41' fill='rgb(139,124,224)'/%3E%3Ccircle cx='250' cy='478.78' r='5.41' fill='rgb(79,212,232)'/%3E%3Ccircle cx='21.22' cy='250' r='5.41' fill='rgb(242,162,184)'/%3E%3C/svg%3E"><img class="ring-arc" id="ring-float" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cdefs%3E%3ClinearGradient id='g' gradientUnits='userSpaceOnUse' x1='4' y1='4' x2='422.2' y2='496'%3E%3Cstop offset='0' stop-color='rgb(198,205,246)'/%3E%3Cstop offset='0.5' stop-color='rgb(180,189,242)'/%3E%3Cstop offset='1' stop-color='rgb(163,175,240)'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M 250 37.95 A 212.05 212.05 0 0 1 399.94 399.94' fill='none' stroke='url(%23g)' stroke-width='6.4' stroke-linecap='round'/%3E%3C/svg%3E"><div class="ring-center"><div class="ring-badge"><img class="ring-badge-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU0IiBoZWlnaHQ9IjU0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEzLjEiIHI9IjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIvPjxwYXRoIGQ9Ik0xMiA5Ljl2My40bDIuMyAxLjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhmOTVjNiIgc3Ryb2tlLXdpZHRoPSIxLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik00LjMgNi4zIDYuNiA0TTE5LjcgNi4zIDE3LjQgNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><div class="ring-time mono">20:06:22.5</div><div class="ring-sub">北京时间</div></div></div></div><div class="quick-panel"><div class="quick-circle"><img class="quick-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTkuNiAxMmE3LjYgNy42IDAgMSAxLTIuNS01LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuNnY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTIgOC42djMuNmwyLjggMS43IiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="quick-texts"><span class="quick-title">时间源</span><span class="quick-sub">北京时间</span></div><img class="quick-chevron" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIj48cGF0aCBkPSJNOS44IDUuNiAxNS40IDEybC01LjYgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiNiN2JkYzkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+"></div><div class="collapse"><img class="collapse-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM4IiBoZWlnaHQ9IjM4Ij48cGF0aCBkPSJNNi4yIDkuNiAxMiAxNS4ybDUuOC01LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzdjODQ5NyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="panel"><div class="panel-row"><span class="panel-label">抢购震动提醒</span><input class="switch-s" type="checkbox" class="switch-el switch-s" checked></div><div class="panel-row"><span class="panel-label">开启后屏幕常亮</span><input class="switch-s" type="checkbox" class="switch-el switch-s" checked></div><div class="panel-row"><span class="panel-label">刷新精度</span><div class="seg"><div class="seg-item " data-fps="30">30fps</div><div class="seg-item seg-on" data-fps="60">60fps</div></div></div></div><div class="primary-btn">
+      关闭悬浮窗
+    </div></div><div class="float-pill" style="left:40px;top:150px;width:220px;height:118px;"><div class="fp-head"><div class="fp-head-left"><span class="fp-latency">40ms</span><div class="fp-click"><span class="fp-click-label">点击</span><div class="fp-click-dot fp-click-dot-off"></div></div></div><span class="fp-source">北京时间</span></div><div class="fp-main"><span class="fp-time mono">22:22:57.</span><span class="fp-tenth mono">6</span></div><div class="fp-bottom"><div class="fp-ruler-labels fp-hide"><span class="fp-ruler-label">2.5</span><span class="fp-ruler-label">2.0</span><span class="fp-ruler-label">1.5</span><span class="fp-ruler-label">1.0</span><span class="fp-ruler-label">0.5</span></div><div class="fp-ruler-track fp-hide"><div class="fp-ruler-fill" style="width:0%"></div><div class="fp-ruler-knob" style="left:0%"></div></div><div class="fp-perf "><span class="fp-hz">60Hz</span><div class="fp-net"><span class="fp-net-line">↑ 11 KB/s</span><span class="fp-net-line">↓ 0 KB/s</span></div></div></div></div></div><div class="tabbar-wrap "><div class="tabbar"><div class="tab-item tab-on" data-index="0"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="tab-text">时钟</span></div><div class="tab-item " data-index="1"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48cGF0aCBkPSJNOC40IDMuMiAxNy42IDEyLjRsLTQuNi42LTIuNCA0LjR6IiBmaWxsPSIjMmMzMTQwIi8+PHBhdGggZD0iTTE1LjQgMTUuMmMuOSAxLjEgMS40IDIuNCAxLjQgMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTguNCAxMy4yYzEuNiAxLjkgMi41IDQuMSAyLjUgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">点击</span></div><div class="tab-item " data-index="2"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">我的</span></div></div></div></div>
+      <div class="fm-screen" id="fm-screen-clicker" data-page="clicker"><page-meta></page-meta><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:24px;height:44px;"><div class="nav-row" style="padding-right:108px;"><span class="nav-title">定时点击</span><div class="nav-gap"></div><div class="add-btn"><span class="add-sym">＋</span><span class="add-text">新建</span></div></div></div><div class="page-body"><div class="float-bar "><div class="float-bar-left"><div class="float-dot"></div><span class="float-bar-text">悬浮窗未开启 · 定时点击不会生效</span></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyh6f1gk">删除</div><div class="task-card  card-muted" data-id="task-mu1jyh6f1gk"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">14:29:05</span><span class="task-time-ms mono">.2</span></div><span class="task-place">X 172</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">first</span><span class="task-repeat">每天</span></div><span class="task-place">Y 308</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyh6f143">删除</div><div class="task-card  card-muted" data-id="task-mu1jyh6f143"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">16:26:00</span><span class="task-time-ms mono">.1</span></div><span class="task-place">X 96</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 512</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyh6f66c">删除</div><div class="task-card  card-muted" data-id="task-mu1jyh6f66c"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">17:23:00</span><span class="task-time-ms mono">.3</span></div><span class="task-place">X 280</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 420</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyh6f2fu">删除</div><div class="task-card  card-muted" data-id="task-mu1jyh6f2fu"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">20:26:00</span><span class="task-time-ms mono">.4</span></div><span class="task-place">X 188</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 700</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyh6f2tx">删除</div><div class="task-card  card-muted" data-id="task-mu1jyh6f2tx"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">04:26:00</span><span class="task-time-ms mono">.5</span></div><span class="task-place">X 120</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 240</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyh6f2l8">删除</div><div class="task-card  card-muted" data-id="task-mu1jyh6f2l8"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">05:26:00</span><span class="task-time-ms mono">.6</span></div><span class="task-place">X 260</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 560</span></div></div></div></div></div></div><div class="tabbar-wrap "><div class="tabbar"><div class="tab-item " data-index="0"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="tab-text">时钟</span></div><div class="tab-item tab-on" data-index="1"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48cGF0aCBkPSJNOC40IDMuMiAxNy42IDEyLjRsLTQuNi42LTIuNCA0LjR6IiBmaWxsPSIjMmY2ZmQwIi8+PHBhdGggZD0iTTE1LjQgMTUuMmMuOSAxLjEgMS40IDIuNCAxLjQgMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZmZDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTguNCAxMy4yYzEuNiAxLjkgMi41IDQuMSAyLjUgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZmZDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">点击</span></div><div class="tab-item " data-index="2"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">我的</span></div></div></div></div>
+      <div class="fm-screen" id="fm-screen-events" data-page="events"><page-meta></page-meta><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:24px;height:44px;"><div class="nav-row" style="padding-right:108px;"><div class="back-btn"><img class="back-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0Ij48cGF0aCBkPSJNMTQuOCA1LjYgOS4yIDEybDUuNiA2LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIyLjEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="></div><span class="nav-title">抢购事件</span><div class="nav-gap"></div><div class="add-btn"><span class="add-text">＋ 新建</span></div></div></div><div class="page-body"><div class="hint">点「设为卡片」即可替换首页那张卡片；长按可删除</div><div class="ev-card ev-active" data-id="evt-0"><div class="ev-top"><span class="ev-tag">酒类</span><span class="ev-title">【淘宝】茅台（MOUTAI）飞天 53%vol 500ml 贵州茅台酒</span></div><div class="ev-mid"><span class="ev-price mono">¥ 1499.00</span><span class="ev-badge">首页卡片</span></div><div class="ev-foot"><span class="ev-target">今天 20:00:00</span><div class="ev-digits"><span class="ev-digit mono">17</span><span class="ev-colon">:</span><span class="ev-digit mono">55</span><span class="ev-colon">:</span><span class="ev-digit mono">32</span><span class="ev-digit ev-digit-last mono">3</span></div></div><div class="ev-actions"><div class="ev-action" data-id="evt-0"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0LjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxLjYiIGZpbGw9IiM4YjkzYTciLz48L3N2Zz4="><span class="ev-action-text">当前卡片</span></div><div class="ev-action" data-id="evt-0"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48cGF0aCBkPSJNNS42IDcuNmgxMi44TTkuNCA3LjZWNS44aDUuMnYxLjhNNy40IDcuNmwuOSAxMWg3LjRsLjktMTEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2MyYzhkNCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="ev-action-text">删除</span></div></div></div><div class="ev-card " data-id="evt-1"><div class="ev-top"><span class="ev-tag">数码</span><span class="ev-title">【京东】Apple iPhone 17 Pro Max 256GB 沙漠色钛金属</span></div><div class="ev-mid"><span class="ev-price mono">¥ 9999.00</span></div><div class="ev-foot"><span class="ev-target">今天 10:00:00</span><div class="ev-digits"><span class="ev-digit mono">07</span><span class="ev-colon">:</span><span class="ev-digit mono">55</span><span class="ev-colon">:</span><span class="ev-digit mono">32</span><span class="ev-digit ev-digit-last mono">3</span></div></div><div class="ev-actions"><div class="ev-action" data-id="evt-1"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0LjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxLjYiIGZpbGw9IiM4YjkzYTciLz48L3N2Zz4="><span class="ev-action-text">设为卡片</span></div><div class="ev-action" data-id="evt-1"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48cGF0aCBkPSJNNS42IDcuNmgxMi44TTkuNCA3LjZWNS44aDUuMnYxLjhNNy40IDcuNmwuOSAxMWg3LjRsLjktMTEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2MyYzhkNCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="ev-action-text">删除</span></div></div></div></div></div></div>
+      <div class="fm-screen" id="fm-screen-timeSource" data-page="timeSource"><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:24px;height:44px;"><div class="nav-row" style="padding-right:108px;"><div class="back-btn"><img class="back-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0Ij48cGF0aCBkPSJNMTQuOCA1LjYgOS4yIDEybDUuNiA2LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIyLjEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="></div><span class="nav-title">时间源</span><div class="nav-gap"></div><div class="help-btn"><span class="help-sym">?</span></div></div></div><div class="page-body"><div class="section-title">手动调整时间</div><div class="stepper-card"><div class="stepper-left"><span class="stepper-title">手动微调</span><span class="stepper-value">+0.000s</span></div><div class="stepper"><div class="step-btn"><span class="step-sym">−</span></div><div class="step-div"></div><div class="step-btn"><span class="step-sym">+</span></div></div></div><div class="section-title">选择时间源</div><div class="grid"><div class="src-card " data-key="device"><div class="src-head"><div class="src-badge" style="background:#ff4d4f"><span class="src-badge-text">设</span></div><span class="src-name">设备时间</span><div class="src-sync" data-key="device"></div></div><span class="src-time mono">02:04:27.6</span><span class="src-desc">设备时间</span></div><div class="src-card src-active" data-key="beijing"><div class="src-head"><div class="src-badge" style="background:#e23c3c"><span class="src-badge-text">北京</span></div><span class="src-name">北京时间</span><div class="src-sync" data-key="beijing"></div></div><span class="src-time mono">02:04:38.9</span><span class="src-desc">已校准:+11.2584s</span></div><div class="src-card " data-key="taobao"><div class="src-head"><div class="src-badge" style="background:#ff5000"><span class="src-badge-text">淘</span></div><span class="src-name">淘宝</span><div class="src-sync" data-key="taobao"></div></div><span class="src-time mono">02:04:38.9</span><span class="src-desc">已校准:+11.2507s</span></div><div class="src-card " data-key="tmall"><div class="src-head"><div class="src-badge" style="background:#ff0036"><span class="src-badge-text">天猫</span></div><span class="src-name">天猫</span><div class="src-sync" data-key="tmall"></div></div><span class="src-time mono">02:04:38.9</span><span class="src-desc">已校准:+11.2561s</span></div><div class="src-card " data-key="jd"><div class="src-head"><div class="src-badge" style="background:#e1251b"><span class="src-badge-text">京东</span></div><span class="src-name">京东</span><div class="src-sync" data-key="jd"></div></div><span class="src-time mono">02:04:38.9</span><span class="src-desc">已校准:+11.2559s</span></div><div class="src-card " data-key="damai"><div class="src-head"><div class="src-badge" style="background:#ff6a00"><span class="src-badge-text">大麦</span></div><span class="src-name">大麦</span><div class="src-sync" data-key="damai"></div></div><span class="src-time mono">02:04:38.9</span><span class="src-desc">已校准:+11.2553s</span></div><div class="src-card " data-key="pdd"><div class="src-head"><div class="src-badge" style="background:#e02e24"><span class="src-badge-text">拼</span></div><span class="src-name">拼多多</span><div class="src-sync" data-key="pdd"></div></div><span class="src-time mono">02:04:38.9</span><span class="src-desc">已校准:+11.2574s</span></div><div class="src-card " data-key="unionpay"><div class="src-head"><div class="src-badge" style="background:#d81e06"><span class="src-badge-text">云闪付</span></div><span class="src-name">云闪付</span><div class="src-sync" data-key="unionpay"></div></div><span class="src-time mono">02:04:38.9</span><span class="src-desc">已校准:+11.2533s</span></div><div class="src-card " data-key="meituan"><div class="src-head"><div class="src-badge" style="background:#ffc300"><span class="src-badge-text">美团</span></div><span class="src-name">美团</span><div class="src-sync" data-key="meituan"></div></div><span class="src-time mono">02:04:38.9</span><span class="src-desc">已校准:+11.2515s</span></div><div class="src-card src-add"><span class="add-sym">＋</span></div></div><div class="status-bar"><div class="status-card"><div class="status-badge"><span class="status-badge-text">北京</span><span class="status-badge-text">时间</span></div><span class="status-name">北京时间</span><span class="status-sub">国家授时中心</span></div><div class="status-mid"><span class="status-arrow">‹</span><div class="status-check"><span class="check-sym">✓</span></div><span class="status-arrow">›</span><span class="status-text">已同步</span></div><div class="status-card status-right"><span class="status-name">显示时间 ›</span><span class="status-time mono">02:04:27.6</span></div></div></div></div></div>
+      <div class="fm-screen" id="fm-screen-mine" data-page="mine"><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:24px;height:44px;"><div class="nav-row" style="padding-right:108px;"><span class="nav-title">我的</span></div></div><div class="page-body"><div class="profile"><div class="avatar"><img class="avatar-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="></div><div class="profile-info"><span class="profile-name">微信用户</span><span class="profile-sub">毫秒级走时 · 当前时间源 北京时间</span></div></div><div class="group"><div class="row-item"><div class="row-left"><img class="row-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cmVjdCB4PSI3LjYiIHk9IjMuOCIgd2lkdGg9IjguOCIgaGVpZ2h0PSIxNi40IiByeD0iMi4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTQuMiA5LjR2NS4yTTE5LjggOS40djUuMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNGE1NTcwIiBzdHJva2Utd2lkdGg9IjEuNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"><span class="row-label">抢购震动提醒</span></div><input class="switch-s" type="checkbox" class="switch-el switch-s" checked></div><div class="row-item"><div class="row-left"><img class="row-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIgMy4yIDE5IDZ2NmMwIDQuMi0yLjkgNy40LTcgOC44LTQuMS0xLjQtNy00LjYtNy04LjhWNloiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNOSAxMi4yIDExLjIgMTQuNCAxNS4yIDEwIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="><span class="row-label">开启后屏幕常亮</span></div><input class="switch-s" type="checkbox" class="switch-el switch-s" checked></div></div><div class="group"><div class="row-item"><div class="row-left"><img class="row-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIgMy4yIDE5IDZ2NmMwIDQuMi0yLjkgNy40LTcgOC44LTQuMS0xLjQtNy00LjYtNy04LjhWNloiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNOSAxMi4yIDExLjIgMTQuNCAxNS4yIDEwIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="><span class="row-label">关于悬浮时钟</span></div><div class="row-right"><span class="row-value">v1.0.0</span></div></div><div class="row-item"><div class="row-left"><img class="row-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cmVjdCB4PSIzLjgiIHk9IjUuNCIgd2lkdGg9IjE2LjQiIGhlaWdodD0iMTQiIHJ4PSIyLjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMy44IDEwaDE2LjRNOC40IDMuNHYzLjZNMTUuNiAzLjR2My42IiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="row-label">清除本地数据</span></div></div></div><div class="footer">毫秒级走时 · 北京时间授时 · 抢购倒计时</div></div></div><div class="tabbar-wrap "><div class="tabbar"><div class="tab-item " data-index="0"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="tab-text">时钟</span></div><div class="tab-item tab-on" data-index="1"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48cGF0aCBkPSJNOC40IDMuMiAxNy42IDEyLjRsLTQuNi42LTIuNCA0LjR6IiBmaWxsPSIjMmY2ZmQwIi8+PHBhdGggZD0iTTE1LjQgMTUuMmMuOSAxLjEgMS40IDIuNCAxLjQgMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZmZDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTguNCAxMy4yYzEuNiAxLjkgMi41IDQuMSAyLjUgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZmZDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">点击</span></div><div class="tab-item " data-index="2"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">我的</span></div></div></div></div>
+    </div>
+  </div>
+  <div id="fm-caption"></div>
+<script>
+(function () {
+  var root = document.getElementById("fm-root");
+  if (!root) return;
+  var frame = document.getElementById("fm-frame");
+  var holder = document.getElementById("fm-holder");
+  var caption = document.getElementById("fm-caption");
+  var CAPS = [{"key":"clock","label":"首页","caption":"抢购卡片 · 环形时钟 · 时间源入口 · 悬浮窗按钮"},{"key":"float","label":"悬浮窗","caption":"深色胶囊 · 顶部延迟/时间源 · 大字时间（十分位橙色）"},{"key":"clicker","label":"点击","caption":"底栏中间项（内容待设计）"},{"key":"events","label":"抢购事件","caption":"首页卡片点进来：设为卡片 / 删除 / 新建"},{"key":"timeSource","label":"时间源","caption":"手动微调 · 多源校准 · 同步状态"},{"key":"mine","label":"我的","caption":"时间源切换 · 提醒开关 · 关于与清除数据"}];
+
+  function fit() {
+    var avail = holder.clientWidth || 375;
+    var k = Math.min(1, avail / 375);
+    frame.style.transform = "scale(" + k + ")";
+    holder.style.height = Math.round(812 * k) + "px";
+  }
+
+  function show(key) {
+    var screens = root.querySelectorAll(".fm-screen");
+    for (var i = 0; i < screens.length; i++) {
+      screens[i].className = "fm-screen" + (screens[i].getAttribute("data-page") === key ? " fm-active" : "");
+    }
+    var cap = null;
+    for (var m = 0; m < CAPS.length; m++) { if (CAPS[m].key === key) cap = CAPS[m]; }
+    caption.innerHTML = cap ? ("<b>" + cap.label + "</b> · " + cap.caption) : "";
+    var btns = root.querySelectorAll("#fm-bar button");
+    for (var j = 0; j < btns.length; j++) {
+      btns[j].className = btns[j].getAttribute("data-target") === key ? "fm-on" : "";
+    }
+  }
+
+  // 先把界面和交互准备好，保证绘图出问题也不影响切换
+  var buttons = root.querySelectorAll("#fm-bar button");
+  for (var b = 0; b < buttons.length; b++) {
+    buttons[b].addEventListener("click", function () { show(this.getAttribute("data-target")); });
+  }
+  if (window.addEventListener) window.addEventListener("resize", fit);
+  fit();
+  show("clock");
+
+  var time = null;
+  try { time = (function () { var module = { exports: {} }; var exports = module.exports;// 时间计算：北京时间 / 本机时间 / 服务器时间（带漂移校准）
+const BJ_OFFSET = 8 * 60 * 60 * 1000
+const DAY = 24 * 60 * 60 * 1000
+
+const SOURCE_LABEL = {
+  beijing: '北京时间',
+  device: '本机时间',
+  server: '服务器时间'
+}
+
+function pad(n, len) {
+  let s = String(Math.floor(Math.abs(n)))
+  const width = len || 2
+  while (s.length < width) s = '0' + s
+  return s
+}
+
+// 返回目标时区的“挂钟”字段
+function parts(epochMs, source, serverOffset) {
+  const offset = serverOffset || 0
+  let d
+  let utc = false
+  if (source === 'beijing') {
+    d = new Date(epochMs + BJ_OFFSET)
+    utc = true
+  } else if (source === 'server') {
+    d = new Date(epochMs + offset)
+  } else {
+    d = new Date(epochMs)
+  }
+  const g = (name) => (utc ? d['getUTC' + name]() : d['get' + name]())
+  return {
+    year: g('FullYear'),
+    month: g('Month') + 1,
+    date: g('Date'),
+    day: g('Day'),
+    hours: g('Hours'),
+    minutes: g('Minutes'),
+    seconds: g('Seconds'),
+    ms: g('Milliseconds')
+  }
+}
+
+function sourceLabel(source) {
+  return SOURCE_LABEL[source] || SOURCE_LABEL.beijing
+}
+
+// 走时文本：HH:MM:SS.d（十分位）
+function formatClock(p) {
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds) + '.' + Math.floor(p.ms / 100)
+}
+
+// 倒计时拆分（用于卡片数字块）
+function countdownParts(targetTs, epochMs) {
+  const remain = Math.max(0, (targetTs || epochMs) - epochMs)
+  return {
+    h: pad(Math.floor(remain / 3600000) % 100),
+    m: pad(Math.floor(remain / 60000) % 60),
+    s: pad(Math.floor(remain / 1000) % 60),
+    t: String(Math.floor((remain % 1000) / 100)),
+    remain
+  }
+}
+
+function countdownText(targetTs, epochMs) {
+  const c = countdownParts(targetTs, epochMs)
+  return c.h + ':' + c.m + ':' + c.s
+}
+
+// 以北京时间为基准的当日某个时刻的时间戳
+function beijingEpochOf(h, m, s, epochMs) {
+  const p = parts(epochMs, 'beijing')
+  return Date.UTC(p.year, p.month - 1, p.date, h || 0, m || 0, s || 0, 0) - BJ_OFFSET
+}
+
+// 下一次北京时间 hh:mm:ss（当天已过则顺延一天）
+function nextBeijing(h, m, s, epochMs) {
+  const now = epochMs || Date.now()
+  let t = beijingEpochOf(h, m, s, now)
+  while (t <= now) t += DAY
+  return t
+}
+
+// 目标日期相对今天的天数描述
+function dayOffsetLabel(targetTs, epochMs) {
+  const a = parts(epochMs || Date.now(), 'beijing')
+  const b = parts(targetTs, 'beijing')
+  const da = Date.UTC(a.year, a.month - 1, a.date)
+  const db = Date.UTC(b.year, b.month - 1, b.date)
+  const diff = Math.round((db - da) / DAY)
+  if (diff <= 0) return '今天'
+  return diff + '天后'
+}
+
+function clockLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds)
+}
+
+function dateLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.month + '月' + p.date + '日'
+}
+
+function fullLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.year + '-' + pad(p.month) + '-' + pad(p.date) + ' ' + pad(p.hours) + ':' + pad(p.minutes)
+}
+
+// 解析 "20:00:00"
+function parseHMS(text) {
+  const arr = String(text || '20:00:00').split(':').map(function (v) { return parseInt(v, 10) || 0 })
+  return { h: arr[0] || 0, m: arr[1] || 0, s: arr[2] || 0 }
+}
+
+module.exports = {
+  BJ_OFFSET: BJ_OFFSET,
+  DAY: DAY,
+  pad: pad,
+  parts: parts,
+  sourceLabel: sourceLabel,
+  formatClock: formatClock,
+  countdownParts: countdownParts,
+  countdownText: countdownText,
+  beijingEpochOf: beijingEpochOf,
+  nextBeijing: nextBeijing,
+  dayOffsetLabel: dayOffsetLabel,
+  clockLabel: clockLabel,
+  dateLabel: dateLabel,
+  fullLabel: fullLabel,
+  parseHMS: parseHMS
+}; return module.exports; })(); } catch (e) { time = null; }
+  var ringSvg = null;
+  try { ringSvg = (function () { var module = { exports: {} }; var exports = module.exports;// 环形时钟的矢量图形（纯函数，不依赖 wx）
+//
+// 为什么不用 canvas：
+//   canvas 在部分 iOS / 开发者工具环境下会被渲染成「最上层的原生层」，
+//   任何 DOM（表盘中央的文字、悬浮窗）都会被它盖住 —— 真机上表现为
+//   「圆盘时钟里没有内容」+「悬浮窗被钟面压住」。
+//   改成 SVG data URI 交给 <image> 渲染后，它就是普通 DOM：
+//   层级按 z-index 走（悬浮窗想盖就盖得住），而且矢量在任何 dpr 下都不糊。
+//
+// 设计基准：viewBox 0 0 500 500，与组件宽度 500rpx 一一对应。
+
+const BOX = 500
+
+/** 各种半径/线宽（单位 = viewBox 单位，1 单位 = 1rpx） */
+function metrics() {
+  const c = BOX / 2
+  const PX = BOX / 2 // 500rpx 见方 = 250px（375 设计稿 1rpx = 0.5px）
+  const Rpx = PX / 2 - 2 // 旧 canvas 版：R = min(w,h)/2 - 2（px）= 123
+  const R = Rpx * 2      // 换成 viewBox 单位
+  return {
+    box: BOX,
+    c: c,
+    R: R,
+    tickOuter: R * 0.982,
+    tickMajor: R * 0.062,
+    tickMinor: R * 0.036,
+    tickMajorW: 2 * Math.max(2, Rpx * 0.0135),
+    tickMinorW: 2 * Math.max(1.2, Rpx * 0.0075),
+    arcR: R * 0.862,
+    arcW: 2 * Math.max(3, Rpx * 0.026),
+    dotR: 2 * Math.max(2.6, Rpx * 0.022),
+    dotRing: R * 0.93,
+    innerR: R * 0.88,
+    lineR: R * 0.88 + (R - R * 0.88) * 0.42,
+    shadowBlur: 2 * Rpx * 0.17,
+    shadowY: 2 * Rpx * 0.055
+  }
+}
+
+const DOTS = [
+  { a: -90, c: 'rgb(79,212,232)' },
+  { a: 0, c: 'rgb(139,124,224)' },
+  { a: 90, c: 'rgb(79,212,232)' },
+  { a: 180, c: 'rgb(242,162,184)' }
+]
+
+function r2(n) {
+  return Math.round(n * 100) / 100
+}
+
+/** SVG 文本 -> data URI（只需要转义几个字符，颜色一律用 rgb() 避免 # 转义） */
+function toUrl(svg) {
+  return 'data:image/svg+xml,' + svg
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/"/g, "'")
+    .replace(/%/g, '%25')
+    .replace(/#/g, '%23')
+    .replace(/</g, '%3C')
+    .replace(/>/g, '%3E')
+}
+
+/** 刻度（60 格，每 5 格加长）+ 四色定位点：静态，只算一次 */
+function ticksSvg() {
+  const m = metrics()
+  const parts = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + BOX + ' ' + BOX + '">']
+  for (let i = 0; i < 60; i++) {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / 60
+    const major = i % 5 === 0
+    const len = major ? m.tickMajor : m.tickMinor
+    const x1 = m.c + Math.cos(a) * m.tickOuter
+    const y1 = m.c + Math.sin(a) * m.tickOuter
+    const x2 = m.c + Math.cos(a) * (m.tickOuter - len)
+    const y2 = m.c + Math.sin(a) * (m.tickOuter - len)
+    parts.push('<line x1="' + r2(x1) + '" y1="' + r2(y1) + '" x2="' + r2(x2) + '" y2="' + r2(y2) +
+      '" stroke="' + (major ? 'rgba(72,84,124,0.34)' : 'rgba(72,84,124,0.15)') +
+      '" stroke-width="' + r2(major ? m.tickMajorW : m.tickMinorW) + '" stroke-linecap="round"/>')
+  }
+  for (let i = 0; i < DOTS.length; i++) {
+    const a = (DOTS[i].a * Math.PI) / 180
+    parts.push('<circle cx="' + r2(m.c + Math.cos(a) * m.dotRing) + '" cy="' + r2(m.c + Math.sin(a) * m.dotRing) +
+      '" r="' + r2(m.dotR) + '" fill="' + DOTS[i].c + '"/>')
+  }
+  parts.push('</svg>')
+  return toUrl(parts.join(''))
+}
+
+/** 进度弧的 path：从 12 点开始顺时针扫 sweepDeg 度（纯函数，方便单测） */
+function arcPath(sweepDeg) {
+  const m = metrics()
+  const sweep = Math.max(0.01, Math.min(359.99, sweepDeg))
+  const a0 = -Math.PI / 2
+  const a1 = a0 + (sweep * Math.PI) / 180
+  const x0 = m.c + Math.cos(a0) * m.arcR
+  const y0 = m.c + Math.sin(a0) * m.arcR
+  const x1 = m.c + Math.cos(a1) * m.arcR
+  const y1 = m.c + Math.sin(a1) * m.arcR
+  const large = sweep > 180 ? 1 : 0
+  return 'M ' + r2(x0) + ' ' + r2(y0) + ' A ' + r2(m.arcR) + ' ' + r2(m.arcR) + ' 0 ' + large + ' 1 ' + r2(x1) + ' ' + r2(y1)
+}
+
+/** 进度弧：progress 0..1（当前分钟内走过的比例），太短就不画 */
+function arcSvg(progress) {
+  const m = metrics()
+  const head = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + BOX + ' ' + BOX + '">'
+  const p = typeof progress === 'number' && isFinite(progress) ? progress : 0
+  if (p <= 0.004) return toUrl(head + '</svg>')
+  const defs = '<defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="' + r2(m.c - m.R) + '" y1="' + r2(m.c - m.R) +
+    '" x2="' + r2(m.c + m.R * 0.7) + '" y2="' + r2(m.c + m.R) + '">' +
+    '<stop offset="0" stop-color="rgb(198,205,246)"/><stop offset="0.5" stop-color="rgb(180,189,242)"/>' +
+    '<stop offset="1" stop-color="rgb(163,175,240)"/></linearGradient></defs>'
+  return toUrl(head + defs + '<path d="' + arcPath(p * 360) + '" fill="none" stroke="url(#g)" stroke-width="' +
+    r2(m.arcW) + '" stroke-linecap="round"/></svg>')
+}
+
+module.exports = {
+  BOX: BOX,
+  metrics: metrics,
+  ticksSvg: ticksSvg,
+  arcSvg: arcSvg,
+  arcPath: arcPath,
+  toUrl: toUrl
+}
+; return module.exports; })(); } catch (e) { ringSvg = null; }
+
+  // 环形时钟：表盘/刻度是静态 SVG（构建期就写进 DOM），这里只补进度弧与文字
+  function drawRing(id) {
+    if (!time || !ringSvg) return;
+    var img = document.getElementById(id);
+    if (!img || img.getAttribute("data-drawn") === "1") return;
+    var screen = img.closest(".fm-screen");
+    var real = Date.now;
+    Date.now = function () { return 1789387582500; };
+    try {
+      var p = time.parts(1789387582500, "beijing");
+      img.setAttribute("src", ringSvg.arcSvg((p.seconds + p.ms / 1000) / 60));
+      img.setAttribute("data-drawn", "1");
+      if (screen) {
+        var t = screen.querySelector(".ring-time");
+        if (t) t.textContent = time.formatClock(p);
+      }
+    } catch (e) {} finally { Date.now = real }
+  }
+
+  try {
+    drawRing('ring-clock');
+    drawRing('ring-float');
+  } catch (e) {}
+})();
+</script>
+</div>
+  <div id="fx-note">顶部按钮切换页面；手机框内可上下滚动。整页按 375×812 逻辑像素渲染，底部胶囊栏位置与真机一致。</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+name: Build iOS IPA
+
+# 没有 Mac 也能出 IPA：把工程推到 GitHub，这个工作流跑在 GitHub 的 macOS 机器上，
+# 产出未签名 IPA 作为 artifact，下载后用 Sideloadly / AltStore 用你的 Apple ID 重签安装。
+on:
+  workflow_dispatch:
+    inputs:
+      team_id:
+        description: '可选：Apple Team ID（填了就出已签名 IPA，需要配好证书）'
+        required: false
+        default: ''
+
+jobs:
+  ipa:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: ios-pip
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成工程
+        run: xcodegen generate
+
+      - name: 归档（未签名）
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project ClockPiP.xcodeproj \
+            -scheme ClockPiP \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/ClockPiP.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" | tail -n 30
+
+      - name: 打成 IPA
+        run: |
+          set -euo pipefail
+          mkdir -p build/Payload
+          cp -R build/ClockPiP.xcarchive/Products/Applications/ClockPiP.app build/Payload/
+          cd build && zip -qry ClockPiP-unsigned.ipa Payload
+          ls -lh ClockPiP-unsigned.ipa
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClockPiP-unsigned-ipa
+          path: ios-pip/build/ClockPiP-unsigned.ipa
+          if-no-files-found: error
+
+      - name: （可选）用 TEAM_ID 出已签名 IPA
+        if: ${{ inputs.team_id != '' }}
+        env:
+          TEAM_ID: ${{ inputs.team_id }}
+        run: |
+          set -euo pipefail
+          cat > build/ExportOptions.plist <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>development</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+          </dict></plist>
+          PLIST
+          echo "已签名导出还需要在这里配置证书（fastlane match 或 secrets 导入 p12），"
+          echo "没配证书的话请直接用上面的未签名 IPA + 重签工具。"

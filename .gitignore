@@ -1,0 +1,23 @@
+# ---- iOS 打包产物（每次 CI 都重新生成）----
+ios-pip/build/
+ios-pip/*.xcodeproj/
+ios-pip/*.xcworkspace/
+ios-pip/DerivedData/
+*.xcarchive
+*.ipa
+
+# ---- Android 构建产物 ----
+android-overlay/.gradle/
+android-overlay/build/
+android-overlay/app/build/
+android-overlay/local.properties
+*.apk
+*.aab
+
+# ---- 系统 / 编辑器杂项 ----
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+.idea/
+.vscode/

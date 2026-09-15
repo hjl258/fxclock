@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>悬浮时钟 · 小程序页面预览</title>
+<style>
+  :root { --bg:#0f1320; --panel:#161b2b; --line:#252c40; --text:#e8ecf6; --dim:#8b93a7; --accent:#3b7ff0; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:
+      radial-gradient(60% 40% at 85% 10%, rgba(118,226,212,.14) 0%, rgba(118,226,212,0) 70%),
+      radial-gradient(50% 36% at 5% 30%, rgba(246,192,212,.14) 0%, rgba(246,192,212,0) 70%),
+      linear-gradient(180deg,#0f1320 0%, #0c101a 100%);
+    color:var(--text); font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; min-height:100vh; }
+  header { display:flex; align-items:center; gap:16px; padding:20px 26px 14px; flex-wrap:wrap; }
+  h1 { font-size:19px; margin:0; letter-spacing:.5px; }
+  .badge { font-size:12px; color:#9fb4ff; background:rgba(59,127,240,.14); border:1px solid rgba(59,127,240,.3); padding:4px 10px; border-radius:999px; }
+  .dim { color:var(--dim); font-size:12.5px; line-height:1.7; }
+  .bar { display:flex; gap:8px; padding:0 26px 14px; flex-wrap:wrap; align-items:center; }
+  button { background:var(--panel); color:var(--text); border:1px solid var(--line); padding:9px 16px; border-radius:10px; font-size:13.5px; cursor:pointer; transition:.15s; }
+  button:hover { border-color:#3b4a6b; }
+  button.on { background:linear-gradient(135deg,#4b95f7,#2f6ff0); border-color:transparent; color:#fff; font-weight:600; box-shadow:0 6px 18px rgba(59,127,240,.32); }
+  main { padding:0 26px 40px; }
+  .single { display:flex; gap:28px; align-items:flex-start; flex-wrap:wrap; }
+  .phone { position:relative; width:375px; height:812px; border-radius:46px; padding:10px; background:linear-gradient(160deg,#232a3d,#12151f);
+    box-shadow:0 30px 70px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.06); flex:none; }
+  .phone::after { content:""; position:absolute; left:50%; top:14px; transform:translateX(-50%); width:104px; height:26px; border-radius:14px; background:#05070d; z-index:2; }
+  .phone iframe { width:375px; height:812px; border:0; border-radius:38px; background:#fff; display:block; }
+  .all { display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start; }
+  .all .holder { width:199px; height:431px; position:relative; }
+  .all .holder .inner { width:375px; height:812px; transform:scale(.53); transform-origin:top left; border-radius:34px; overflow:hidden;
+    box-shadow:0 18px 40px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.07); background:#fff; }
+  .all .holder iframe { width:375px; height:812px; border:0; display:block; }
+  .all .cap { margin-top:12px; font-size:12.5px; color:var(--dim); text-align:center; width:199px; }
+  .caption { max-width:320px; }
+  .caption h2 { font-size:14.5px; margin:0 0 10px; }
+  .caption ul { margin:0; padding-left:18px; }
+  .caption li { color:var(--dim); font-size:12.5px; line-height:1.85; }
+  a { color:#7fb0ff; }
+  .hide { display:none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>悬浮时钟 · 小程序页面预览</h1>
+  <span class="badge">真实 WXML / WXSS 渲染</span>
+  <span class="dim">rpx→px 转换 · ring-clock 组件真实 render() 执行结果</span>
+</header>
+
+<div class="bar">
+  <button data-view="single" class="on">单个查看</button>
+  <button data-view="all">四屏并排</button>
+  <span style="width:12px"></span>
+  <button data-page="clock" class="on">首页</button>
+  <button data-page="clock-sheet">设置弹层</button>
+  <button data-page="clock-float">悬浮窗</button>
+  <button data-page="mine">我的</button>
+</div>
+
+<main>
+  <section id="single" class="single">
+    <div class="phone"><iframe id="screen" src="clock.html" scrolling="no"></iframe></div>
+    <div class="caption">
+      <h2 id="cap-title">首页</h2>
+      <ul id="cap-list"></ul>
+      <p class="dim" style="margin-top:14px">改完小程序代码后执行 <code>node preview/build-preview.js</code> 重新生成，刷新本页即可看到最新效果。整页尺寸按 375×812 逻辑像素渲染，fixed 定位的 TabBar 与真机一致。</p>
+    </div>
+  </section>
+
+  <section id="all" class="all hide">
+    <div>
+      <div class="holder"><div class="inner"><iframe src="clock.html" scrolling="no"></iframe></div></div>
+      <div class="cap">首页</div>
+    </div>
+    <div>
+      <div class="holder"><div class="inner"><iframe src="clock-sheet.html" scrolling="no"></iframe></div></div>
+      <div class="cap">设置弹层</div>
+    </div>
+    <div>
+      <div class="holder"><div class="inner"><iframe src="clock-float.html" scrolling="no"></iframe></div></div>
+      <div class="cap">悬浮窗</div>
+    </div>
+    <div>
+      <div class="holder"><div class="inner"><iframe src="mine.html" scrolling="no"></iframe></div></div>
+      <div class="cap">我的</div>
+    </div>
+  </section>
+</main>
+
+<script>
+  var DESC = {
+    'clock': { title: '首页', items: [
+      '自定义导航栏「悬浮时钟」+ 设置齿轮',
+      '抢购卡片：标题、¥1499.00、倒计时 23:53:37:5、1天后 20:00:00、右上火焰角标',
+      '环形时钟：60 格刻度、淡紫进度弧（当前分钟内秒数）、四色定位点、毫秒大字',
+      '时间源入口（一行卡片式），点按打开设置弹层',
+      '收起箭头展开提醒与刷新精度，蓝色主按钮「开启悬浮窗」',
+      '底部胶囊 TabBar：时钟 / 我的'
+    ]},
+    'clock-sheet': { title: '设置弹层', items: [
+      '遮罩 + 底部弹层，z-index 高于 TabBar，不会被底栏压住',
+      '时间源三选一：北京时间 / 本机时间 / 服务器时间',
+      '提醒与显示：震动提醒、倒计时提示音、屏幕常亮',
+      '底部「完成」按钮完整可见（含安全区内边距）'
+    ]},
+    'clock-float': { title: '悬浮窗', items: [
+      '开启后为页内全屏悬浮层，可拖拽黑色胶囊',
+      '胶囊内显示毫秒时间、时间源、抢购倒计时',
+      '同时开启屏幕常亮，避免开抢时熄屏',
+      '注：小程序无法覆盖到其它 App 之上，这是平台限制'
+    ]},
+    'mine': { title: '我的', items: [
+      '时间源快捷切换（点按循环，与首页联动）',
+      '三个提醒开关：震动 / 提示音 / 屏幕常亮',
+      '关于与清除本地数据',
+      '底部 TabBar 选中态同步'
+    ]}
+  }
+
+  var view = 'single'
+  var page = 'clock'
+  var screen = document.getElementById('screen')
+  var single = document.getElementById('single')
+  var all = document.getElementById('all')
+
+  function apply() {
+    document.querySelectorAll('[data-view]').forEach(function (b) { b.classList.toggle('on', b.dataset.view === view) })
+    document.querySelectorAll('[data-page]').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.page === page)
+      b.style.opacity = view === 'all' ? .45 : 1
+      b.style.pointerEvents = view === 'all' ? 'none' : 'auto'
+    })
+    single.classList.toggle('hide', view !== 'single')
+    all.classList.toggle('hide', view !== 'all')
+    if (view === 'single') screen.src = page + '.html'
+    var d = DESC[page]
+    document.getElementById('cap-title').textContent = d.title
+    document.getElementById('cap-list').innerHTML = d.items.map(function (i) { return '<li>' + i + '</li>' }).join('')
+  }
+
+  document.querySelectorAll('[data-view]').forEach(function (b) {
+    b.onclick = function () { view = b.dataset.view; apply() }
+  })
+  document.querySelectorAll('[data-page]').forEach(function (b) {
+    b.onclick = function () { page = b.dataset.page; view = 'single'; apply() }
+  })
+  apply()
+</script>
+</body>
+</html>

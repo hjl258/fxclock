@@ -1,0 +1,95 @@
+<view class="page">
+  <view class="bg"></view>
+  <view class="bg-band"></view>
+
+  <view class="nav" style="padding-top:{{statusBarHeight}}px;height:{{navBarHeight}}px;">
+    <view class="nav-row" style="padding-right:{{capsulePad}}px;">
+      <view class="back-btn" bindtap="goBack" hover-class="tap">
+        <image class="back-icon" src="{{icons.back}}" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">时间源</text>
+      <view class="nav-gap"></view>
+      <view class="help-btn" bindtap="showHelp" hover-class="tap">
+        <text class="help-sym">?</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="page-body">
+    <view class="section-title">手动调整时间</view>
+    <view class="stepper-card">
+      <view class="stepper-left">
+        <text class="stepper-title">手动微调</text>
+        <text class="stepper-value">{{manualText}}</text>
+      </view>
+      <view class="stepper">
+        <view class="step-btn" bindtap="decManual" hover-class="tap">
+          <text class="step-sym">−</text>
+        </view>
+        <view class="step-div"></view>
+        <view class="step-btn" bindtap="incManual" hover-class="tap">
+          <text class="step-sym">+</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-title">选择时间源</view>
+    <view class="grid">
+      <view
+        class="src-card {{item.active ? 'src-active' : ''}}"
+        wx:for="{{items}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        bindtap="selectSource"
+        hover-class="tap"
+      >
+        <view class="src-head">
+          <view class="src-badge" style="background:{{item.color}}">
+            <text class="src-badge-text">{{item.badge}}</text>
+          </view>
+          <text class="src-name">{{item.name}}</text>
+          <view class="src-sync" catchtap="resync" data-key="{{item.key}}" hover-class="tap">
+            <image class="src-sync-icon" src="{{icons.refresh}}" mode="aspectFit"></image>
+          </view>
+        </view>
+        <text class="src-time mono">{{item.time}}</text>
+        <text class="src-desc">{{item.desc}}</text>
+      </view>
+
+      <view class="src-card src-add" bindtap="addSource" hover-class="tap">
+        <text class="add-sym">＋</text>
+      </view>
+    </view>
+
+    <view class="status-bar">
+      <view class="status-card">
+        <view class="status-badge">
+          <text class="status-badge-text">北京</text>
+          <text class="status-badge-text">时间</text>
+        </view>
+        <text class="status-name">{{currentName}}</text>
+        <text class="status-sub">国家授时中心</text>
+      </view>
+      <view class="status-mid">
+        <text class="status-arrow">‹</text>
+        <view class="status-check">
+          <text class="check-sym">✓</text>
+        </view>
+        <text class="status-arrow">›</text>
+        <text class="status-text">已同步</text>
+      </view>
+      <view class="status-card status-right">
+        <image class="status-icon" src="{{icons.clock}}" mode="aspectFit"></image>
+        <text class="status-name">显示时间 ›</text>
+        <text class="status-time mono">{{currentText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <float-clock
+    show="{{floatOn}}"
+    source="{{floatSource}}"
+    server-offset="{{floatOffset}}"
+    label="{{floatLabel}}"
+  />
+</view>

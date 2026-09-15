@@ -1,0 +1,110 @@
+<!-- 弹层打开时锁住页面滚动 -->
+<page-meta page-style="{{pageStyle}}"></page-meta>
+<view class="page">
+  <view class="bg"></view>
+  <view class="bg-band"></view>
+
+  <view class="nav" style="padding-top:{{statusBarHeight}}px;height:{{navBarHeight}}px;">
+    <view class="nav-row" style="padding-right:{{capsulePad}}px;">
+      <view class="back-btn" bindtap="goBack" hover-class="tap">
+        <image class="back-icon" src="{{icons.back}}" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">抢购事件</text>
+      <view class="nav-gap"></view>
+      <view class="add-btn" bindtap="openAdd" hover-class="tap">
+        <text class="add-text">＋ 新建</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="page-body">
+    <view class="hint">点「设为卡片」即可替换首页那张卡片；长按可删除</view>
+
+    <view
+      class="ev-card {{item.active ? 'ev-active' : ''}}"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      bindlongpress="onDelete"
+    >
+      <view class="ev-top">
+        <text class="ev-tag">{{item.tag}}</text>
+        <text class="ev-title">{{item.title}}</text>
+      </view>
+      <view class="ev-mid">
+        <text class="ev-price mono">¥ {{item.price}}</text>
+        <text class="ev-badge" wx:if="{{item.active}}">首页卡片</text>
+      </view>
+      <view class="ev-foot">
+        <text class="ev-target">{{item.targetLabel}}</text>
+        <view class="ev-digits">
+          <text class="ev-digit mono">{{item.cd.h}}</text>
+          <text class="ev-colon">:</text>
+          <text class="ev-digit mono">{{item.cd.m}}</text>
+          <text class="ev-colon">:</text>
+          <text class="ev-digit mono">{{item.cd.s}}</text>
+          <text class="ev-digit ev-digit-last mono">{{item.cd.t}}</text>
+        </view>
+      </view>
+      <view class="ev-actions">
+        <view class="ev-action" data-id="{{item.id}}" bindtap="setActive">
+          <image class="ev-action-icon" src="{{icons.target}}" mode="aspectFit"></image>
+          <text class="ev-action-text">{{item.active ? '当前卡片' : '设为卡片'}}</text>
+        </view>
+        <view class="ev-action" data-id="{{item.id}}" bindtap="onDelete">
+          <image class="ev-action-icon" src="{{icons.trash}}" mode="aspectFit"></image>
+          <text class="ev-action-text">删除</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="mask" wx:if="{{showAdd}}" bindtap="closeAdd" catchtouchmove="noop"></view>
+  <view class="sheet" wx:if="{{showAdd}}">
+    <view class="sheet-head">
+      <text class="sheet-title">新建抢购事件</text>
+      <image class="sheet-close" src="{{icons.close}}" mode="aspectFit" bindtap="closeAdd"></image>
+    </view>
+
+    <view class="form-row">
+      <text class="form-label">商品标题</text>
+      <input class="form-input" value="{{form.title}}" placeholder="例：【淘宝】飞天茅台 53%vol 500ml" placeholder-class="ph" bindinput="onTitleInput" />
+    </view>
+    <view class="form-row">
+      <text class="form-label">价格</text>
+      <input class="form-input" type="digit" value="{{form.price}}" placeholder="1499.00" placeholder-class="ph" bindinput="onPriceInput" />
+    </view>
+    <view class="form-row">
+      <text class="form-label">平台</text>
+      <input class="form-input" value="{{form.platform}}" placeholder="淘宝 / 京东 / 得物" placeholder-class="ph" bindinput="onPlatformInput" />
+    </view>
+    <view class="form-row">
+      <text class="form-label">开抢时间</text>
+      <picker mode="time" value="{{form.at}}" bindchange="onTimeChange">
+        <view class="form-picker">{{form.at}} ›</view>
+      </picker>
+    </view>
+    <view class="form-row">
+      <text class="form-label">重复方式</text>
+      <view class="seg">
+        <view class="seg-item {{form.kind === 'daily' ? 'seg-on' : ''}}" data-kind="daily" bindtap="onKindTap">每日</view>
+        <view class="seg-item {{form.kind === 'once' ? 'seg-on' : ''}}" data-kind="once" bindtap="onKindTap">仅一次</view>
+      </view>
+    </view>
+    <view class="form-row">
+      <text class="form-label">分类</text>
+      <view class="tag-list">
+        <view class="tag {{form.tag === item ? 'tag-on' : ''}}" wx:for="{{tags}}" wx:key="*this" data-tag="{{item}}" bindtap="onTagTap">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="primary-btn sheet-btn" bindtap="submit">保存并设为首页卡片</view>
+  </view>
+
+  <float-clock
+    show="{{floatOn}}"
+    source="{{floatSource}}"
+    server-offset="{{floatOffset}}"
+    label="{{floatLabel}}"
+  />
+</view>

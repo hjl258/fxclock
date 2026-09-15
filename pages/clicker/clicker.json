@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "float-clock": "/components/float-clock/index"
+  },
+  "navigationStyle": "custom"
+}

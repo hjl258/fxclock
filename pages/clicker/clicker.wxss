@@ -1,0 +1,537 @@
+.nav-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #16181f;
+}
+
+.add-btn {
+  height: 64rpx;
+  padding: 0 24rpx;
+  border-radius: 32rpx;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 100%);
+  box-shadow: 0 8rpx 20rpx rgba(59, 127, 240, 0.28);
+  display: flex;
+  align-items: center;
+}
+
+.add-sym {
+  font-size: 32rpx;
+  line-height: 1;
+  color: #ffffff;
+  margin-right: 6rpx;
+}
+
+.add-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* 任务卡片：白底、时间大字、绿色名称 + 每天、右侧开关 */
+/* 生效状态条：跟随「开启悬浮窗」 */
+.float-bar {
+  margin: 18rpx 28rpx 0;
+  padding: 20rpx 24rpx;
+  border-radius: 22rpx;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 10rpx 22rpx rgba(120, 150, 200, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.float-bar-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.float-dot {
+  flex: none;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  margin-right: 14rpx;
+  background: #c2c8d4;
+}
+
+.float-bar-on {
+  background: linear-gradient(135deg, #eaf7ee 0%, #dff1e5 100%);
+}
+
+.float-bar-on .float-dot {
+  background: #37b24d;
+  box-shadow: 0 0 12rpx rgba(55, 178, 77, 0.7);
+}
+
+.float-bar-text {
+  font-size: 26rpx;
+  color: #5a6478;
+}
+
+.float-bar-on .float-bar-text {
+  color: #2b7a3f;
+  font-weight: 600;
+}
+
+
+
+/* 未开启悬浮窗时：列表项显示为未生效
+   注意：不能给 .task-card 加 opacity —— 卡片一旦半透明，
+   下层平铺的红色删除按钮会透出来（左滑未展开也会看到「删除」）。
+   所以只弱化卡片内部文字，卡片白底保持不透明。 */
+.card-muted .task-time-main,
+.card-muted .task-sub-text,
+.card-muted .task-place {
+  opacity: 0.42;
+}
+
+.card-muted .task-time-ms {
+  opacity: 0.5;
+}
+
+/* 行容器：左滑露出右侧删除按钮 */
+.task-row {
+  position: relative;
+  margin: 20rpx 28rpx 0;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.task-delete {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 168rpx;
+  background: linear-gradient(135deg, #ef5b45 0%, #e34d3b 100%);
+  color: #ffffff;
+  font-size: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.task-card {
+  position: relative;
+  z-index: 2;
+  /* 右侧内边距 = 原开关占位（96rpx 开关 + 20rpx 间距 + 26rpx 内边距），
+     去掉开关后坐标仍在原来的水平位置 */
+  padding: 28rpx 142rpx 28rpx 26rpx;
+  border-radius: 20rpx;
+  background: #ffffff;
+  box-shadow: 0 10rpx 24rpx rgba(120, 150, 200, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.22s ease;
+}
+
+.task-open {
+  transform: translateX(-168rpx);
+}
+
+.task-left {
+  flex: 1;
+}
+
+.task-time {
+  display: flex;
+  align-items: baseline;
+}
+
+/* 时间列固定宽度，坐标列在「时间与开关之间」居中 */
+.task-time-text {
+  flex: none;
+  width: 320rpx;
+  display: flex;
+  align-items: baseline;
+}
+
+.task-time-main {
+  font-size: 46rpx;
+  font-weight: 600;
+  color: #1b1f2a;
+  letter-spacing: 1rpx;
+}
+
+.task-time-ms {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #37b24d;
+  letter-spacing: 1rpx;
+}
+
+.task-place {
+  /* 定宽块 + 自动外边距：整块在「文字列与右侧留白之间」居中，
+     块内文字左对齐，使每行的 X / Y 字母竖直对齐 */
+  flex: none;
+  width: 180rpx;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+  font-size: 32rpx;
+  color: #6f7a91;
+  letter-spacing: 0.5rpx;
+}
+
+.task-sub {
+  margin-top: 10rpx;
+  display: flex;
+  align-items: baseline;
+}
+
+/* 名称列与时间列同宽，Y 因此与 X 对齐 */
+.task-sub-text {
+  flex: none;
+  width: 320rpx;
+  display: flex;
+  align-items: baseline;
+}
+
+.task-name {
+  font-size: 26rpx;
+  color: #37b24d;
+}
+
+.task-repeat {
+  margin-left: 14rpx;
+  font-size: 26rpx;
+  color: #8b93a7;
+}
+
+/* 圆柱滑动开关样式（当前列表已不使用，保留备用） */
+.cyl-switch {
+  position: relative;
+  flex: none;
+  width: 96rpx;
+  height: 54rpx;
+  border-radius: 27rpx;
+  background: linear-gradient(180deg, #d7dde8 0%, #c9d2e0 100%);
+  box-shadow: inset 0 3rpx 7rpx rgba(60, 80, 120, 0.24), inset 0 -1rpx 0 rgba(255, 255, 255, 0.55);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cyl-knob {
+  position: absolute;
+  top: 4rpx;
+  left: 4rpx;
+  width: 46rpx;
+  height: 46rpx;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffffff 0%, #eef1f7 100%);
+  box-shadow: 0 4rpx 10rpx rgba(30, 45, 80, 0.30), inset 0 -2rpx 4rpx rgba(40, 60, 100, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.cyl-on {
+  background: linear-gradient(180deg, #52cf6f 0%, #37b24d 100%);
+  box-shadow: inset 0 3rpx 7rpx rgba(20, 90, 40, 0.28), inset 0 -1rpx 0 rgba(255, 255, 255, 0.28);
+}
+
+.cyl-on .cyl-knob {
+  transform: translateX(42rpx);
+}
+
+.task-right {
+  flex: none;
+  margin-left: 20rpx;
+}
+
+.empty {
+  margin: 80rpx 28rpx 0;
+  padding: 80rpx 0;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.6);
+  border: 2rpx dashed rgba(140, 160, 200, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-title {
+  font-size: 30rpx;
+  color: #5a6478;
+}
+
+.empty-sub {
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  color: #98a0b3;
+}
+
+/* 弹层里的时间编辑 */
+.time-preview {
+  margin: 26rpx 0 8rpx;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.time-main {
+  font-size: 64rpx;
+  font-weight: 600;
+  color: #1b1f2a;
+  letter-spacing: 1rpx;
+}
+
+.time-ms {
+  font-size: 44rpx;
+  font-weight: 600;
+  color: #37b24d;
+  letter-spacing: 1rpx;
+}
+
+.stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 88rpx;
+  border-bottom: 1rpx solid rgba(150, 165, 200, 0.14);
+}
+
+.stepper-label {
+  font-size: 26rpx;
+  color: #5a6478;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  height: 60rpx;
+  border-radius: 30rpx;
+  background: #eef1f8;
+}
+
+.step-btn {
+  width: 84rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  color: #2c3140;
+}
+
+.step-value {
+  min-width: 88rpx;
+  text-align: center;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1b1f2a;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 96rpx;
+  border-bottom: 1rpx solid rgba(150, 165, 200, 0.14);
+}
+
+.form-label {
+  flex: none;
+  width: 160rpx;
+  font-size: 26rpx;
+  color: #5a6478;
+}
+
+.form-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1b1f2a;
+  text-align: right;
+}
+
+.ph {
+  color: #b7bdc9;
+}
+
+.place-value {
+  display: flex;
+  align-items: center;
+}
+
+.place-text {
+  font-size: 28rpx;
+  color: #b0b7c4;
+}
+
+.place-tag {
+  margin-left: 12rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 18rpx;
+  font-size: 20rpx;
+  color: #8b93a7;
+  background: #f0f2f7;
+}
+
+/* 坐标系面板 */
+.coord-wrap {
+  margin-top: 20rpx;
+}
+
+.coord-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.coord-title {
+  font-size: 26rpx;
+  color: #5a6478;
+}
+
+.coord-hint {
+  font-size: 22rpx;
+  color: #98a0b3;
+}
+
+.coord-panel {
+  position: relative;
+  height: 320rpx;
+  border-radius: 20rpx;
+  background-color: #f7f9fc;
+  background-image: linear-gradient(to right, rgba(120, 150, 200, 0.18) 1rpx, transparent 1rpx),
+    linear-gradient(to bottom, rgba(120, 150, 200, 0.18) 1rpx, transparent 1rpx);
+  background-size: 10% 10%;
+  border: 1rpx solid rgba(140, 160, 200, 0.3);
+  overflow: hidden;
+}
+
+.coord-axis {
+  position: absolute;
+  background: rgba(59, 127, 240, 0.25);
+}
+
+.coord-axis-x {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1rpx;
+}
+
+.coord-axis-y {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1rpx;
+}
+
+.coord-marker {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.coord-marker-dot {
+  position: absolute;
+  left: -12rpx;
+  top: -12rpx;
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  background: #e34d3b;
+  border: 4rpx solid #ffffff;
+  box-shadow: 0 4rpx 12rpx rgba(227, 77, 59, 0.45);
+}
+
+.coord-corner {
+  position: absolute;
+  font-size: 20rpx;
+  color: #a8b3c6;
+}
+
+.coord-tl {
+  left: 10rpx;
+  top: 8rpx;
+}
+
+.coord-br {
+  right: 10rpx;
+  bottom: 8rpx;
+}
+
+.pick-btn {
+  margin-top: 16rpx;
+  height: 80rpx;
+  border-radius: 20rpx;
+  background: #eef2fa;
+  color: #2f6fd0;
+  font-size: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.place-on {
+  color: #2f6fd0;
+  font-weight: 600;
+}
+
+/* 全屏取点 */
+.pick-mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 320;
+  background: rgba(18, 24, 38, 0.42);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pick-tip {
+  font-size: 32rpx;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.pick-sub {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.pick-cancel {
+  margin-top: 40rpx;
+  padding: 16rpx 56rpx;
+  border-radius: 40rpx;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1b1f2a;
+  font-size: 28rpx;
+}
+
+.sheet-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 36rpx;
+}
+
+.danger-btn {
+  flex: none;
+  height: 96rpx;
+  padding: 0 40rpx;
+  margin-right: 20rpx;
+  border-radius: 24rpx;
+  background: #fdecea;
+  color: #e34d3b;
+  font-size: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet-btn {
+  flex: 1;
+  margin: 0;
+  height: 96rpx;
+}
+
+.page-body {
+  padding-bottom: 240rpx;
+}

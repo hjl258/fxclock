@@ -1,0 +1,14 @@
+<view class="tabbar-wrap {{hidden ? 'tabbar-hide' : ''}}">
+  <view class="tabbar">
+    <view
+      class="tab-item {{selected === index ? 'tab-on' : ''}}"
+      wx:for="{{list}}"
+      wx:key="pagePath"
+      data-index="{{index}}"
+      bindtap="onTap"
+    >
+      <image class="tab-icon" src="{{iconList[index]}}" mode="aspectFit"></image>
+      <text class="tab-text">{{item.text}}</text>
+    </view>
+  </view>
+</view>

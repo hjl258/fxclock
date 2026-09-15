@@ -1,0 +1,263 @@
+/* ---------- 抢购卡片 ---------- */
+.event-card {
+  position: relative;
+  margin: 22rpx 28rpx 0;
+  padding: 26rpx 26rpx 22rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
+  background: linear-gradient(150deg, #eef6fe 0%, #e8f0fd 58%, #eaf1fb 100%);
+  box-shadow: 0 12rpx 30rpx rgba(120, 150, 200, 0.12);
+}
+
+.ribbon {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 66rpx;
+  height: 66rpx;
+  border-bottom-left-radius: 26rpx;
+  background: linear-gradient(180deg, #ddecfd 0%, #cbe0fc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ribbon-icon {
+  width: 36rpx;
+  height: 36rpx;
+  margin-left: 8rpx;
+  margin-top: -6rpx;
+}
+
+.event-head {
+  display: flex;
+  align-items: center;
+  padding-right: 60rpx;
+}
+
+.event-thumb {
+  flex: none;
+  width: 46rpx;
+  height: 46rpx;
+  border-radius: 13rpx;
+  margin-right: 16rpx;
+  background: linear-gradient(160deg, #5aa9f6 0%, #2f78ee 100%);
+  box-shadow: 0 6rpx 14rpx rgba(47, 120, 238, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-thumb-icon {
+  width: 30rpx;
+  height: 30rpx;
+}
+
+.event-title {
+  flex: 1;
+  font-size: 28rpx;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.event-mid {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 18rpx;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  color: #ff6a00;
+}
+
+.price-sym {
+  font-size: 26rpx;
+  font-weight: 600;
+  margin-right: 4rpx;
+}
+
+.price-num {
+  font-size: 42rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+}
+
+.cd-label {
+  font-size: 24rpx;
+  color: #8b93a7;
+}
+
+.event-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16rpx;
+}
+
+.event-target {
+  font-size: 26rpx;
+  color: #8b93a7;
+}
+
+.digits {
+  display: flex;
+  align-items: center;
+}
+
+.digit {
+  min-width: 56rpx;
+  height: 56rpx;
+  padding: 0 6rpx;
+  border-radius: 12rpx;
+  background: #ffffff;
+  box-shadow: 0 4rpx 12rpx rgba(120, 150, 200, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1b1f2a;
+}
+
+.colon {
+  font-size: 26rpx;
+  color: #8b93a7;
+  margin: 0 8rpx;
+}
+
+.digit-last {
+  margin-left: 18rpx;
+  min-width: 48rpx;
+}
+
+.card-live {
+  background: linear-gradient(150deg, #fff1ec 0%, #ffe7e0 100%);
+  box-shadow: 0 12rpx 30rpx rgba(255, 120, 80, 0.18);
+}
+
+.card-live .cd-label,
+.card-live .price,
+.card-live .price-num {
+  color: #ff4d2d;
+}
+
+.card-done {
+  opacity: 0.72;
+}
+
+/* ---------- 环形时钟 ---------- */
+.ring-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 56rpx;
+}
+
+/* ---------- 时间源 ---------- */
+.quick-panel {
+  display: flex;
+  align-items: center;
+  margin: 72rpx 28rpx 0;
+  padding: 22rpx 26rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 12rpx 28rpx rgba(120, 150, 200, 0.12);
+}
+
+.quick-circle {
+  flex: none;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fdfeff 0%, #eef1f8 100%);
+  box-shadow: 0 8rpx 20rpx rgba(140, 160, 200, 0.16), inset 0 0 0 1rpx rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.quick-texts {
+  flex: 1;
+  margin-left: 22rpx;
+}
+
+.quick-title {
+  display: block;
+  font-size: 28rpx;
+  color: #2c3140;
+}
+
+.quick-sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: #8b93a7;
+}
+
+.quick-chevron {
+  width: 30rpx;
+  height: 30rpx;
+}
+
+/* ---------- 收起 / 展开 ---------- */
+.collapse {
+  display: flex;
+  justify-content: center;
+  margin: 30rpx 0 6rpx;
+}
+
+.collapse-icon {
+  width: 36rpx;
+  height: 36rpx;
+  opacity: 0.6;
+}
+
+.panel {
+  margin: 12rpx 28rpx 0;
+  padding: 4rpx 26rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 10rpx 24rpx rgba(140, 160, 200, 0.12);
+}
+
+.panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100rpx;
+  border-bottom: 1rpx solid rgba(150, 165, 200, 0.16);
+}
+
+.panel-row:last-child {
+  border-bottom: none;
+}
+
+.panel-label {
+  font-size: 28rpx;
+  color: #2c3140;
+}
+
+/* ---------- 弹层补充 ---------- */
+.radio-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.radio-desc {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #98a0b3;
+}
+
+.sheet-btn {
+  margin-top: 40rpx;
+}

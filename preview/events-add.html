@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>新建抢购事件</title>
+<style>
+html, body { margin: 0; padding: 0; width: 375px; }
+img { object-fit: contain; display: block; }
+.switch-el { -webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 12px; background: #e2e6ee; position: relative; }
+.switch-el:checked { background: #3b7ff0; }
+.switch-el::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.switch-el:checked::after { left: 20px; }
+body {
+  background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.body {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* 背景：柔和径向渐变 + 斜向光带 */
+.bg {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);
+}
+
+.bg-band {
+  position: fixed;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);
+}
+
+.page-body {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;
+}
+
+/* 自定义导航栏 */
+.nav {
+  position: relative;
+  z-index: 2;
+  box-sizing: content-box;
+}
+
+.nav-row {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;
+}
+
+.nav-title {
+  font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;
+}
+
+.nav-gap {
+  flex: 1;
+}
+
+
+
+.tap {
+  opacity: 0.7;
+}
+
+/* 通用卡片 */
+.card-skin {
+  background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);
+}
+
+/* 主按钮 */
+.primary-btn {
+  margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 分段控件 */
+.seg {
+  display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;
+}
+
+.seg-item {
+  padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;
+}
+
+.seg-on {
+  background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);
+}
+
+.seg-lg .seg-item {
+  flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;
+}
+
+/* 行设置 */
+.row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);
+}
+
+.row-item:last-child {
+  border-bottom: none;
+}
+
+.row-label {
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+.row-value {
+  font-size: 13.000px;
+  color: #8b93a7;
+}
+
+.switch-s {
+  transform: scale(0.78);
+}
+
+/* 底部弹层 */
+.mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  /* 必须高于自定义 TabBar(z-index 60)，否则弹层会被底栏压住 */
+  z-index: 300;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  /* 只留左右内边距：上下留白挪进标题栏/滚动区，否则弹层边缘会出现
+     既不能滚、又会把触摸放给页面的死区 */
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 78vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 滚动交给里面的 scroll-view，页面本身不再滚 */
+}
+
+/* 弹层主体：撑满剩余高度，自身可滚
+   （真机的滚动由 <scroll-view scroll-y> 处理，overflow 是给网页预览兜底的） */
+.sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));
+}
+
+.sheet-head {
+  padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;
+}
+
+.sheet-title {
+  font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;
+}
+
+.sheet-close {
+  width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;
+}
+
+.sheet-group {
+  margin-top: 13.000px;
+}
+
+.sheet-group-title {
+  font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;
+}
+
+.radio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);
+}
+
+.radio-row:last-child {
+  border-bottom: none;
+}
+
+.radio-label {
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+.radio-icon {
+  width: 20.000px;
+  height: 20.000px;
+}
+
+/* 页面级标题 */
+.section-title {
+  display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;
+}
+
+.section-title-main {
+  font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;
+}
+
+.section-title-sub {
+  margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.mono {
+  font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.nav-title {
+  font-size: 20.000px;
+  font-weight: 700;
+  color: #16181f;
+}
+
+.back-btn {
+  width: 36.000px;
+  height: 36.000px;
+  border-radius: 50%;
+  margin-right: 6.000px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 3.000px 8.000px rgba(140, 160, 200, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-icon {
+  width: 20.000px;
+  height: 20.000px;
+}
+
+.add-btn {
+  height: 32.000px;
+  padding: 0 12.000px;
+  border-radius: 16.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 100%);
+  box-shadow: 0 4.000px 10.000px rgba(59, 127, 240, 0.28);
+  display: flex;
+  align-items: center;
+}
+
+.add-text {
+  font-size: 13.000px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.hint {
+  margin: 11.000px 16.000px 0;
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.ev-card {
+  margin: 9.000px 14.000px 0;
+  padding: 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);
+}
+
+.ev-active {
+  background: linear-gradient(150deg, #eef6fe 0%, #e6eefd 100%);
+  box-shadow: 0 6.000px 14.000px rgba(90, 150, 240, 0.18);
+}
+
+.ev-top {
+  display: flex;
+  align-items: center;
+}
+
+.ev-tag {
+  flex: none;
+  height: 18.000px;
+  line-height: 18.000px;
+  padding: 0 7.000px;
+  margin-right: 7.000px;
+  border-radius: 5.000px;
+  font-size: 10.000px;
+  color: #2f6fd0;
+  background: rgba(90, 150, 240, 0.12);
+}
+
+.ev-title {
+  flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ev-mid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8.000px;
+}
+
+.ev-price {
+  font-size: 18.000px;
+  font-weight: 700;
+  color: #ff6a00;
+}
+
+.ev-badge {
+  font-size: 11.000px;
+  color: #2f6fd0;
+  padding: 2.000px 7.000px;
+  border-radius: 10.000px;
+  background: rgba(90, 150, 240, 0.14);
+}
+
+.ev-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 7.000px;
+}
+
+.ev-target {
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.ev-digits {
+  display: flex;
+  align-items: center;
+}
+
+.ev-digit {
+  min-width: 22.000px;
+  text-align: center;
+  font-size: 14.000px;
+  font-weight: 700;
+  color: #1b1f2a;
+}
+
+.ev-digit-last {
+  margin-left: 5.000px;
+  color: #2f6fd0;
+}
+
+.ev-colon {
+  margin: 0 2.000px;
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.ev-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 10.000px;
+  padding-top: 9.000px;
+  border-top: 0.500px solid rgba(150, 165, 200, 0.16);
+}
+
+.ev-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28.000px;
+}
+
+.ev-action-icon {
+  width: 15.000px;
+  height: 15.000px;
+  margin-right: 4.000px;
+}
+
+.ev-action-text {
+  font-size: 12.000px;
+  color: #5a6478;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);
+}
+
+.form-label {
+  flex: none;
+  width: 84.000px;
+  font-size: 13.000px;
+  color: #5a6478;
+}
+
+.form-input {
+  flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  text-align: right;
+}
+
+.ph {
+  color: #b7bdc9;
+}
+
+.form-picker {
+  font-size: 14.000px;
+  color: #2f6fd0;
+  font-weight: 600;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.tag {
+  padding: 4.000px 10.000px;
+  margin: 3.000px 0 3.000px 7.000px;
+  border-radius: 11.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  background: #f0f2f7;
+}
+
+.tag-on {
+  color: #2f6fd0;
+  background: rgba(90, 150, 240, 0.16);
+  font-weight: 600;
+}
+
+.sheet-btn {
+  margin-top: 20.000px;
+}
+
+.page-body {
+  padding-bottom: 40.000px;
+}
+</style>
+</head>
+<body>
+<page-meta></page-meta><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:24px;height:44px;"><div class="nav-row" style="padding-right:108px;"><div class="back-btn"><img class="back-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0Ij48cGF0aCBkPSJNMTQuOCA1LjYgOS4yIDEybDUuNiA2LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIyLjEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="></div><span class="nav-title">抢购事件</span><div class="nav-gap"></div><div class="add-btn"><span class="add-text">＋ 新建</span></div></div></div><div class="page-body"><div class="hint">点「设为卡片」即可替换首页那张卡片；长按可删除</div><div class="ev-card ev-active" data-id="evt-0"><div class="ev-top"><span class="ev-tag">酒类</span><span class="ev-title">【淘宝】茅台（MOUTAI）飞天 53%vol 500ml 贵州茅台酒</span></div><div class="ev-mid"><span class="ev-price mono">¥ 1499.00</span><span class="ev-badge">首页卡片</span></div><div class="ev-foot"><span class="ev-target">今天 20:00:00</span><div class="ev-digits"><span class="ev-digit mono">17</span><span class="ev-colon">:</span><span class="ev-digit mono">55</span><span class="ev-colon">:</span><span class="ev-digit mono">32</span><span class="ev-digit ev-digit-last mono">3</span></div></div><div class="ev-actions"><div class="ev-action" data-id="evt-0"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0LjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxLjYiIGZpbGw9IiM4YjkzYTciLz48L3N2Zz4="><span class="ev-action-text">当前卡片</span></div><div class="ev-action" data-id="evt-0"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48cGF0aCBkPSJNNS42IDcuNmgxMi44TTkuNCA3LjZWNS44aDUuMnYxLjhNNy40IDcuNmwuOSAxMWg3LjRsLjktMTEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2MyYzhkNCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="ev-action-text">删除</span></div></div></div><div class="ev-card " data-id="evt-1"><div class="ev-top"><span class="ev-tag">数码</span><span class="ev-title">【京东】Apple iPhone 17 Pro Max 256GB 沙漠色钛金属</span></div><div class="ev-mid"><span class="ev-price mono">¥ 9999.00</span></div><div class="ev-foot"><span class="ev-target">今天 10:00:00</span><div class="ev-digits"><span class="ev-digit mono">07</span><span class="ev-colon">:</span><span class="ev-digit mono">55</span><span class="ev-colon">:</span><span class="ev-digit mono">32</span><span class="ev-digit ev-digit-last mono">3</span></div></div><div class="ev-actions"><div class="ev-action" data-id="evt-1"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0LjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxLjYiIGZpbGw9IiM4YjkzYTciLz48L3N2Zz4="><span class="ev-action-text">设为卡片</span></div><div class="ev-action" data-id="evt-1"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48cGF0aCBkPSJNNS42IDcuNmgxMi44TTkuNCA3LjZWNS44aDUuMnYxLjhNNy40IDcuNmwuOSAxMWg3LjRsLjktMTEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2MyYzhkNCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="ev-action-text">删除</span></div></div></div></div><div class="mask"></div><div class="sheet"><div class="sheet-head"><span class="sheet-title">新建抢购事件</span><img class="sheet-close" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNNi40IDYuNCAxNy42IDE3LjZNMTcuNiA2LjQgNi40IDE3LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzZiNzI4MCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="></div><div class="form-row"><span class="form-label">商品标题</span><input class="form-input" value=""></div><div class="form-row"><span class="form-label">价格</span><input class="form-input" value=""></div><div class="form-row"><span class="form-label">平台</span><input class="form-input" value=""></div><div class="form-row"><span class="form-label">开抢时间</span><div><div class="form-picker">20:00 ›</div></div></div><div class="form-row"><span class="form-label">重复方式</span><div class="seg"><div class="seg-item seg-on" data-kind="daily">每日</div><div class="seg-item " data-kind="once">仅一次</div></div></div><div class="form-row"><span class="form-label">分类</span><div class="tag-list"><div class="tag tag-on" data-tag="酒类">酒类</div><div class="tag " data-tag="数码">数码</div><div class="tag " data-tag="球鞋">球鞋</div><div class="tag " data-tag="美妆">美妆</div><div class="tag " data-tag="门票">门票</div></div></div><div class="primary-btn sheet-btn">保存并设为首页卡片</div></div></div>
+<script>
+var RING_BODY = "\n  properties: {\n    source: { type: String, value: 'beijing' },\n    serverOffset: { type: Number, value: 0 },\n    badgeIcon: { type: String, value: '' },\n    label: { type: String, value: '' },\n    size: { type: Number, value: 500 }\n  },\n\n  data: {\n    timeText: '--:--:--.-',\n    subText: '北京时间',\n    ticksSvg: '',\n    arcSvg: ''\n  },\n\n  lifetimes: {\n    ready() {\n      this._alive = true\n      // 刻度与定位点是静态的，只算一次（比较贵）\n      if (!this.data.ticksSvg) this.setData({ ticksSvg: ringSvg.ticksSvg() })\n      this.start()\n    },\n    detached() {\n      this.stop()\n    }\n  },\n\n  methods: {\n    start() {\n      if (this._timer) return\n      this.paint()\n      // 50ms 一档：弧每步约 0.3°，肉眼看是连续的\n      this._timer = setInterval(() => this.paint(), 50)\n    },\n\n    stop() {\n      if (this._timer) {\n        clearInterval(this._timer)\n        this._timer = null\n      }\n    },\n\n    pause() {\n      this.stop()\n    },\n\n    resume() {\n      this._alive = true\n      this.start()\n    },\n\n    paint() {\n      if (!this._alive) return\n      const p = time.parts(Date.now(), this.data.source, this.data.serverOffset)\n      const progress = (p.seconds + p.ms / 1000) / 60\n      const text = time.formatClock(p)\n      const sub = this.data.label || time.sourceLabel(this.data.source)\n      const patch = {}\n\n      // 进度弧：字符串没变就不 setData（省一半渲染）\n      const arc = ringSvg.arcSvg(progress)\n      if (arc !== this._lastArc) {\n        this._lastArc = arc\n        patch.arcSvg = arc\n      }\n      if (text !== this._lastText || sub !== this._lastSub) {\n        this._lastText = text\n        this._lastSub = sub\n        patch.timeText = text\n        patch.subText = sub\n        this.triggerEvent('tick', { text: text, sub: sub })\n      }\n      if (Object.keys(patch).length) this.setData(patch)\n    }\n  }\n";
+var TIME_SRC = "// 时间计算：北京时间 / 本机时间 / 服务器时间（带漂移校准）\nconst BJ_OFFSET = 8 * 60 * 60 * 1000\nconst DAY = 24 * 60 * 60 * 1000\n\nconst SOURCE_LABEL = {\n  beijing: '北京时间',\n  device: '本机时间',\n  server: '服务器时间'\n}\n\nfunction pad(n, len) {\n  let s = String(Math.floor(Math.abs(n)))\n  const width = len || 2\n  while (s.length < width) s = '0' + s\n  return s\n}\n\n// 返回目标时区的“挂钟”字段\nfunction parts(epochMs, source, serverOffset) {\n  const offset = serverOffset || 0\n  let d\n  let utc = false\n  if (source === 'beijing') {\n    d = new Date(epochMs + BJ_OFFSET)\n    utc = true\n  } else if (source === 'server') {\n    d = new Date(epochMs + offset)\n  } else {\n    d = new Date(epochMs)\n  }\n  const g = (name) => (utc ? d['getUTC' + name]() : d['get' + name]())\n  return {\n    year: g('FullYear'),\n    month: g('Month') + 1,\n    date: g('Date'),\n    day: g('Day'),\n    hours: g('Hours'),\n    minutes: g('Minutes'),\n    seconds: g('Seconds'),\n    ms: g('Milliseconds')\n  }\n}\n\nfunction sourceLabel(source) {\n  return SOURCE_LABEL[source] || SOURCE_LABEL.beijing\n}\n\n// 走时文本：HH:MM:SS.d（十分位）\nfunction formatClock(p) {\n  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds) + '.' + Math.floor(p.ms / 100)\n}\n\n// 倒计时拆分（用于卡片数字块）\nfunction countdownParts(targetTs, epochMs) {\n  const remain = Math.max(0, (targetTs || epochMs) - epochMs)\n  return {\n    h: pad(Math.floor(remain / 3600000) % 100),\n    m: pad(Math.floor(remain / 60000) % 60),\n    s: pad(Math.floor(remain / 1000) % 60),\n    t: String(Math.floor((remain % 1000) / 100)),\n    remain\n  }\n}\n\nfunction countdownText(targetTs, epochMs) {\n  const c = countdownParts(targetTs, epochMs)\n  return c.h + ':' + c.m + ':' + c.s\n}\n\n// 以北京时间为基准的当日某个时刻的时间戳\nfunction beijingEpochOf(h, m, s, epochMs) {\n  const p = parts(epochMs, 'beijing')\n  return Date.UTC(p.year, p.month - 1, p.date, h || 0, m || 0, s || 0, 0) - BJ_OFFSET\n}\n\n// 下一次北京时间 hh:mm:ss（当天已过则顺延一天）\nfunction nextBeijing(h, m, s, epochMs) {\n  const now = epochMs || Date.now()\n  let t = beijingEpochOf(h, m, s, now)\n  while (t <= now) t += DAY\n  return t\n}\n\n// 目标日期相对今天的天数描述\nfunction dayOffsetLabel(targetTs, epochMs) {\n  const a = parts(epochMs || Date.now(), 'beijing')\n  const b = parts(targetTs, 'beijing')\n  const da = Date.UTC(a.year, a.month - 1, a.date)\n  const db = Date.UTC(b.year, b.month - 1, b.date)\n  const diff = Math.round((db - da) / DAY)\n  if (diff <= 0) return '今天'\n  return diff + '天后'\n}\n\nfunction clockLabel(ts) {\n  const p = parts(ts, 'beijing')\n  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds)\n}\n\nfunction dateLabel(ts) {\n  const p = parts(ts, 'beijing')\n  return p.month + '月' + p.date + '日'\n}\n\nfunction fullLabel(ts) {\n  const p = parts(ts, 'beijing')\n  return p.year + '-' + pad(p.month) + '-' + pad(p.date) + ' ' + pad(p.hours) + ':' + pad(p.minutes)\n}\n\n// 解析 \"20:00:00\"\nfunction parseHMS(text) {\n  const arr = String(text || '20:00:00').split(':').map(function (v) { return parseInt(v, 10) || 0 })\n  return { h: arr[0] || 0, m: arr[1] || 0, s: arr[2] || 0 }\n}\n\nmodule.exports = {\n  BJ_OFFSET: BJ_OFFSET,\n  DAY: DAY,\n  pad: pad,\n  parts: parts,\n  sourceLabel: sourceLabel,\n  formatClock: formatClock,\n  countdownParts: countdownParts,\n  countdownText: countdownText,\n  beijingEpochOf: beijingEpochOf,\n  nextBeijing: nextBeijing,\n  dayOffsetLabel: dayOffsetLabel,\n  clockLabel: clockLabel,\n  dateLabel: dateLabel,\n  fullLabel: fullLabel,\n  parseHMS: parseHMS\n}";
+var time = (function () { var module = { exports: {} }; var exports = module.exports; // 时间计算：北京时间 / 本机时间 / 服务器时间（带漂移校准）
+const BJ_OFFSET = 8 * 60 * 60 * 1000
+const DAY = 24 * 60 * 60 * 1000
+
+const SOURCE_LABEL = {
+  beijing: '北京时间',
+  device: '本机时间',
+  server: '服务器时间'
+}
+
+function pad(n, len) {
+  let s = String(Math.floor(Math.abs(n)))
+  const width = len || 2
+  while (s.length < width) s = '0' + s
+  return s
+}
+
+// 返回目标时区的“挂钟”字段
+function parts(epochMs, source, serverOffset) {
+  const offset = serverOffset || 0
+  let d
+  let utc = false
+  if (source === 'beijing') {
+    d = new Date(epochMs + BJ_OFFSET)
+    utc = true
+  } else if (source === 'server') {
+    d = new Date(epochMs + offset)
+  } else {
+    d = new Date(epochMs)
+  }
+  const g = (name) => (utc ? d['getUTC' + name]() : d['get' + name]())
+  return {
+    year: g('FullYear'),
+    month: g('Month') + 1,
+    date: g('Date'),
+    day: g('Day'),
+    hours: g('Hours'),
+    minutes: g('Minutes'),
+    seconds: g('Seconds'),
+    ms: g('Milliseconds')
+  }
+}
+
+function sourceLabel(source) {
+  return SOURCE_LABEL[source] || SOURCE_LABEL.beijing
+}
+
+// 走时文本：HH:MM:SS.d（十分位）
+function formatClock(p) {
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds) + '.' + Math.floor(p.ms / 100)
+}
+
+// 倒计时拆分（用于卡片数字块）
+function countdownParts(targetTs, epochMs) {
+  const remain = Math.max(0, (targetTs || epochMs) - epochMs)
+  return {
+    h: pad(Math.floor(remain / 3600000) % 100),
+    m: pad(Math.floor(remain / 60000) % 60),
+    s: pad(Math.floor(remain / 1000) % 60),
+    t: String(Math.floor((remain % 1000) / 100)),
+    remain
+  }
+}
+
+function countdownText(targetTs, epochMs) {
+  const c = countdownParts(targetTs, epochMs)
+  return c.h + ':' + c.m + ':' + c.s
+}
+
+// 以北京时间为基准的当日某个时刻的时间戳
+function beijingEpochOf(h, m, s, epochMs) {
+  const p = parts(epochMs, 'beijing')
+  return Date.UTC(p.year, p.month - 1, p.date, h || 0, m || 0, s || 0, 0) - BJ_OFFSET
+}
+
+// 下一次北京时间 hh:mm:ss（当天已过则顺延一天）
+function nextBeijing(h, m, s, epochMs) {
+  const now = epochMs || Date.now()
+  let t = beijingEpochOf(h, m, s, now)
+  while (t <= now) t += DAY
+  return t
+}
+
+// 目标日期相对今天的天数描述
+function dayOffsetLabel(targetTs, epochMs) {
+  const a = parts(epochMs || Date.now(), 'beijing')
+  const b = parts(targetTs, 'beijing')
+  const da = Date.UTC(a.year, a.month - 1, a.date)
+  const db = Date.UTC(b.year, b.month - 1, b.date)
+  const diff = Math.round((db - da) / DAY)
+  if (diff <= 0) return '今天'
+  return diff + '天后'
+}
+
+function clockLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds)
+}
+
+function dateLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.month + '月' + p.date + '日'
+}
+
+function fullLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.year + '-' + pad(p.month) + '-' + pad(p.date) + ' ' + pad(p.hours) + ':' + pad(p.minutes)
+}
+
+// 解析 "20:00:00"
+function parseHMS(text) {
+  const arr = String(text || '20:00:00').split(':').map(function (v) { return parseInt(v, 10) || 0 })
+  return { h: arr[0] || 0, m: arr[1] || 0, s: arr[2] || 0 }
+}
+
+module.exports = {
+  BJ_OFFSET: BJ_OFFSET,
+  DAY: DAY,
+  pad: pad,
+  parts: parts,
+  sourceLabel: sourceLabel,
+  formatClock: formatClock,
+  countdownParts: countdownParts,
+  countdownText: countdownText,
+  beijingEpochOf: beijingEpochOf,
+  nextBeijing: nextBeijing,
+  dayOffsetLabel: dayOffsetLabel,
+  clockLabel: clockLabel,
+  dateLabel: dateLabel,
+  fullLabel: fullLabel,
+  parseHMS: parseHMS
+}; return module.exports; })();
+var FIXED = 1789387582500;
+function drawRing() {
+  var canvas = document.getElementById("ring");
+  if (!canvas) return;
+  var dpr = 2, w = 250, h = 250;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + "px"; canvas.style.height = h + "px";
+  var ctx = canvas.getContext("2d");
+  var self = {
+    ctx: ctx, dpr: dpr, w: w, h: h,
+    data: { source: "beijing", serverOffset: 0 },
+    setData: function (o) {
+      if (o.timeText !== undefined) { var e = document.querySelector(".ring-time"); if (e) e.textContent = o.timeText; }
+      if (o.subText !== undefined) { var s = document.querySelector(".ring-sub"); if (s) s.textContent = o.subText; }
+    },
+    triggerEvent: function () {}
+  };
+  var fn = new Function("time", "return function () {" + RING_BODY + "}")(time);
+  var real = Date.now;
+  Date.now = function () { return FIXED; };
+  fn.call(self);
+  Date.now = real;
+}
+drawRing();
+</script>
+</body>
+</html>

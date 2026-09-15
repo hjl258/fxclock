@@ -1,0 +1,103 @@
+<view class="page">
+  <view class="bg"></view>
+  <view class="bg-band"></view>
+
+  <!-- 自定义导航栏 -->
+  <view class="nav" style="padding-top:{{statusBarHeight}}px;height:{{navBarHeight}}px;">
+    <view class="nav-row" style="padding-right:{{capsulePad}}px;">
+      <text class="nav-title">悬浮时钟</text>
+    </view>
+  </view>
+
+  <view class="page-body">
+    <!-- 抢购卡片 -->
+    <view class="event-card {{cardState}}" bindtap="openEvents" hover-class="tap">
+      <view class="ribbon">
+        <image class="ribbon-icon" src="{{icons.flame}}" mode="aspectFit"></image>
+      </view>
+      <view class="event-head">
+        <view class="event-thumb">
+          <image class="event-thumb-icon" src="{{icons.goods}}" mode="aspectFit"></image>
+        </view>
+        <text class="event-title">{{event.title}}</text>
+      </view>
+      <view class="event-mid">
+        <view class="price">
+          <text class="price-sym">¥</text>
+          <text class="price-num mono">{{event.price}}</text>
+        </view>
+        <text class="cd-label">{{cdLabel}}</text>
+      </view>
+      <view class="event-foot">
+        <text class="event-target">{{targetLabel}}</text>
+        <view class="digits">
+          <view class="digit mono">{{cd.h}}</view>
+          <text class="colon">:</text>
+          <view class="digit mono">{{cd.m}}</view>
+          <text class="colon">:</text>
+          <view class="digit mono">{{cd.s}}</view>
+          <view class="digit digit-last mono">{{cd.t}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 环形时钟 -->
+    <view class="ring-wrap">
+      <ring-clock
+        id="ring"
+        source="{{settings.source}}"
+        server-offset="{{serverOffset}}"
+        badge-icon="{{icons.alarm}}"
+        label="{{sourceLabel}}"
+        bind:tick="onRingTick"
+      />
+    </view>
+
+    <!-- 时间源 -->
+    <view class="quick-panel" bindtap="openTimeSource" hover-class="tap">
+      <view class="quick-circle">
+        <image class="quick-icon" src="{{icons.source}}" mode="aspectFit"></image>
+      </view>
+      <view class="quick-texts">
+        <text class="quick-title">时间源</text>
+        <text class="quick-sub">{{sourceLabel}}</text>
+      </view>
+      <image class="quick-chevron" src="{{icons.chevronRight}}" mode="aspectFit"></image>
+    </view>
+
+    <!-- 收起 / 展开 -->
+    <view class="collapse" bindtap="toggleExpand">
+      <image class="collapse-icon" src="{{expanded ? icons.chevronDown : icons.chevronUp}}" mode="aspectFit"></image>
+    </view>
+
+    <view class="panel" wx:if="{{expanded}}">
+      <view class="panel-row">
+        <text class="panel-label">抢购震动提醒</text>
+        <switch class="switch-s" checked="{{settings.haptic}}" color="#3b7ff0" bindchange="onHapticChange" />
+      </view>
+      <view class="panel-row">
+        <text class="panel-label">开启后屏幕常亮</text>
+        <switch class="switch-s" checked="{{settings.keepScreenOn}}" color="#3b7ff0" bindchange="onKeepScreenChange" />
+      </view>
+      <view class="panel-row">
+        <text class="panel-label">刷新精度</text>
+        <view class="seg">
+          <view class="seg-item {{settings.fps === 30 ? 'seg-on' : ''}}" data-fps="30" bindtap="setFps">30fps</view>
+          <view class="seg-item {{settings.fps === 60 ? 'seg-on' : ''}}" data-fps="60" bindtap="setFps">60fps</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 主按钮 -->
+    <view class="primary-btn" bindtap="toggleFloat" hover-class="tap">
+      {{floatOn ? '关闭悬浮窗' : '开启悬浮窗'}}
+    </view>
+  </view>
+
+  <float-clock
+    show="{{floatOn}}"
+    source="{{ringSource}}"
+    server-offset="{{serverOffset}}"
+    label="{{sourceLabel}}"
+  />
+</view>

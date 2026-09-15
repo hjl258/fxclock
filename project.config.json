@@ -1,0 +1,86 @@
+{
+  "description": "悬浮时钟 · 抢购倒计时小程序",
+  "packOptions": {
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "preview"
+      },
+      {
+        "type": "file",
+        "value": "README.md"
+      },
+      {
+        "type": "folder",
+        "value": "pages/hot"
+      },
+      {
+        "type": "folder",
+        "value": "pages/tools"
+      },
+      {
+        "type": "file",
+        "value": "cleanup.ps1"
+      },
+      {
+        "type": "file",
+        "value": "export-miniapp.js"
+      },
+      {
+        "type": "folder",
+        "value": "android-overlay"
+      },
+      {
+        "type": "folder",
+        "value": "ios-pip"
+      }
+    ],
+    "include": []
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "coverView": true,
+    "nodeModules": false,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "uglifyFileName": false,
+    "checkInvalidKey": true,
+    "checkSiteMap": true,
+    "uploadWithSourceMap": true,
+    "compileHotReLoad": true,
+    "useMultiFrameRuntime": true,
+    "useApiHook": true,
+    "useApiHostProcess": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "useIsolateContext": true,
+    "userConfirmedBundleSwitch": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "disableUseStrict": false,
+    "minifyWXML": true,
+    "showES6CompileOption": false,
+    "useCompilerPlugins": false
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.5.0",
+  "appid": "wx204a54ab304970bd",
+  "projectname": "定时点击器",
+  "simulatorType": "wechat",
+  "simulatorPluginLibVersion": {},
+  "condition": {},
+  "editorSetting": {
+    "tabIndent": "insertSpaces",
+    "tabSize": 2
+  }
+}

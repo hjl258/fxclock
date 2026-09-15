@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>首页 · 设置</title>
+<style>
+html, body { margin: 0; padding: 0; width: 375px; }
+img { object-fit: contain; display: block; }
+.switch-el { -webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 12px; background: #e2e6ee; position: relative; }
+.switch-el:checked { background: #3b7ff0; }
+.switch-el::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.switch-el:checked::after { left: 20px; }
+body {
+  background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.body {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* 背景：柔和径向渐变 + 斜向光带 */
+.bg {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);
+}
+
+.bg-band {
+  position: fixed;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);
+}
+
+.page-body {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;
+}
+
+/* 自定义导航栏 */
+.nav {
+  position: relative;
+  z-index: 2;
+  box-sizing: content-box;
+}
+
+.nav-row {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;
+}
+
+.nav-title {
+  font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;
+}
+
+.nav-gap {
+  flex: 1;
+}
+
+
+
+.tap {
+  opacity: 0.7;
+}
+
+/* 通用卡片 */
+.card-skin {
+  background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);
+}
+
+/* 主按钮 */
+.primary-btn {
+  margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 分段控件 */
+.seg {
+  display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;
+}
+
+.seg-item {
+  padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;
+}
+
+.seg-on {
+  background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);
+}
+
+.seg-lg .seg-item {
+  flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;
+}
+
+/* 行设置 */
+.row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);
+}
+
+.row-item:last-child {
+  border-bottom: none;
+}
+
+.row-label {
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+.row-value {
+  font-size: 13.000px;
+  color: #8b93a7;
+}
+
+.switch-s {
+  transform: scale(0.78);
+}
+
+/* 底部弹层 */
+.mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  /* 必须高于自定义 TabBar(z-index 60)，否则弹层会被底栏压住 */
+  z-index: 300;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  padding: 16.000px 16.000px calc(30.000px + env(safe-area-inset-bottom));
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 78vh;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;
+}
+
+.sheet-title {
+  font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;
+}
+
+.sheet-close {
+  width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;
+}
+
+.sheet-group {
+  margin-top: 13.000px;
+}
+
+.sheet-group-title {
+  font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;
+}
+
+.radio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);
+}
+
+.radio-row:last-child {
+  border-bottom: none;
+}
+
+.radio-label {
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+.radio-icon {
+  width: 20.000px;
+  height: 20.000px;
+}
+
+/* 页面级标题 */
+.section-title {
+  display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;
+}
+
+.section-title-main {
+  font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;
+}
+
+.section-title-sub {
+  margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.mono {
+  font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+/* ---------- 抢购卡片 ---------- */
+.event-card {
+  position: relative;
+  margin: 11.000px 14.000px 0;
+  padding: 13.000px 13.000px 11.000px;
+  border-radius: 14.000px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #eef6fe 0%, #e8f0fd 58%, #eaf1fb 100%);
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.12);
+}
+
+.ribbon {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 33.000px;
+  height: 33.000px;
+  border-bottom-left-radius: 13.000px;
+  background: linear-gradient(180deg, #ddecfd 0%, #cbe0fc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ribbon-icon {
+  width: 18.000px;
+  height: 18.000px;
+  margin-left: 4.000px;
+  margin-top: -3.000px;
+}
+
+.event-head {
+  display: flex;
+  align-items: center;
+  padding-right: 30.000px;
+}
+
+.event-thumb {
+  flex: none;
+  width: 23.000px;
+  height: 23.000px;
+  border-radius: 6.500px;
+  margin-right: 8.000px;
+  background: linear-gradient(160deg, #5aa9f6 0%, #2f78ee 100%);
+  box-shadow: 0 3.000px 7.000px rgba(47, 120, 238, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-thumb-icon {
+  width: 15.000px;
+  height: 15.000px;
+}
+
+.event-title {
+  flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.event-mid {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 9.000px;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  color: #ff6a00;
+}
+
+.price-sym {
+  font-size: 13.000px;
+  font-weight: 600;
+  margin-right: 2.000px;
+}
+
+.price-num {
+  font-size: 21.000px;
+  font-weight: 700;
+  letter-spacing: 0.500px;
+}
+
+.cd-label {
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.event-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8.000px;
+}
+
+.event-target {
+  font-size: 13.000px;
+  color: #8b93a7;
+}
+
+.digits {
+  display: flex;
+  align-items: center;
+}
+
+.digit {
+  min-width: 28.000px;
+  height: 28.000px;
+  padding: 0 3.000px;
+  border-radius: 6.000px;
+  background: #ffffff;
+  box-shadow: 0 2.000px 6.000px rgba(120, 150, 200, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16.000px;
+  font-weight: 700;
+  color: #1b1f2a;
+}
+
+.colon {
+  font-size: 13.000px;
+  color: #8b93a7;
+  margin: 0 4.000px;
+}
+
+.digit-last {
+  margin-left: 9.000px;
+  min-width: 24.000px;
+}
+
+.card-live {
+  background: linear-gradient(150deg, #fff1ec 0%, #ffe7e0 100%);
+  box-shadow: 0 6.000px 15.000px rgba(255, 120, 80, 0.18);
+}
+
+.card-live .cd-label,
+.card-live .price,
+.card-live .price-num {
+  color: #ff4d2d;
+}
+
+.card-done {
+  opacity: 0.72;
+}
+
+/* ---------- 环形时钟 ---------- */
+.ring-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 28.000px;
+}
+
+/* ---------- 时间源 ---------- */
+.quick-panel {
+  display: flex;
+  align-items: center;
+  margin: 36.000px 14.000px 0;
+  padding: 11.000px 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);
+}
+
+.quick-circle {
+  flex: none;
+  width: 48.000px;
+  height: 48.000px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fdfeff 0%, #eef1f8 100%);
+  box-shadow: 0 4.000px 10.000px rgba(140, 160, 200, 0.16), inset 0 0 0 0.500px rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-icon {
+  width: 22.000px;
+  height: 22.000px;
+}
+
+.quick-texts {
+  flex: 1;
+  margin-left: 11.000px;
+}
+
+.quick-title {
+  display: block;
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+.quick-sub {
+  display: block;
+  margin-top: 3.000px;
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.quick-chevron {
+  width: 15.000px;
+  height: 15.000px;
+}
+
+/* ---------- 收起 / 展开 ---------- */
+.collapse {
+  display: flex;
+  justify-content: center;
+  margin: 15.000px 0 3.000px;
+}
+
+.collapse-icon {
+  width: 18.000px;
+  height: 18.000px;
+  opacity: 0.6;
+}
+
+.panel {
+  margin: 6.000px 14.000px 0;
+  padding: 2.000px 13.000px;
+  border-radius: 12.000px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 5.000px 12.000px rgba(140, 160, 200, 0.12);
+}
+
+.panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 50.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);
+}
+
+.panel-row:last-child {
+  border-bottom: none;
+}
+
+.panel-label {
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+/* ---------- 弹层补充 ---------- */
+.radio-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.radio-desc {
+  margin-top: 3.000px;
+  font-size: 11.000px;
+  color: #98a0b3;
+}
+
+.sheet-btn {
+  margin-top: 20.000px;
+}
+.ring {
+  position: relative;
+}
+
+.ring-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ring-center {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-badge {
+  width: 46.000px;
+  height: 46.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(180deg, #f2f4ff 0%, #e9ecfb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 13.000px;
+}
+
+.ring-badge-icon {
+  width: 25.000px;
+  height: 25.000px;
+}
+
+.ring-time {
+  font-size: 36.000px;
+  font-weight: 700;
+  color: #1b1f2a;
+  letter-spacing: 0.500px;
+  line-height: 1;
+}
+
+.ring-sub {
+  margin-top: 10.000px;
+  font-size: 13.000px;
+  color: #98a0b3;
+  letter-spacing: 0.500px;
+}
+.float-hint {
+  /* 小胶囊提示，不铺满宽度，且不拦截点击 */
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 66.000px;
+  padding: 4.000px 11.000px;
+  border-radius: 12.000px;
+  background: rgba(12, 16, 28, 0.62);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 11.000px;
+  letter-spacing: 0.500px;
+  z-index: 79;
+  pointer-events: none;
+}
+
+/* 深色卡片：自己就是唯一可交互元素 */
+.float-pill {
+  position: fixed;
+  z-index: 80;
+  box-sizing: border-box;
+  padding: 7.000px 10.000px 6.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(165deg, #4a5464 0%, #3c4553 45%, #333b48 100%);
+  box-shadow: 0 8.000px 18.000px rgba(10, 14, 24, 0.42), inset 0 0 0 0.500px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* 顶部：延迟 + 时间源 */
+.fp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fp-latency {
+  font-size: 12.000px;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.500px;
+}
+
+.fp-source {
+  font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.500px;
+}
+
+/* 中间：大字时间，最后一位橙色 */
+.fp-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-top: 1.000px;
+}
+
+.fp-time {
+  font-size: 30.000px;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 0.500px;
+  line-height: 1;
+}
+
+.fp-tenth {
+  font-size: 34.000px;
+  font-weight: 700;
+  color: #ee5a2e;
+  line-height: 1;
+  margin-left: 1.000px;
+}
+
+/* 底部区：高度固定，内容在「刻度尺」与「开抢倒计时」之间切换，避免卡片跳动 */
+.fp-bottom {
+  width: 100%;
+  height: 31.000px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.fp-hide {
+  display: none;
+}
+
+.fp-countdown {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.fp-countdown-label {
+  font-size: 10.000px;
+  color: rgba(255, 255, 255, 0.55);
+  margin-right: 4.000px;
+}
+
+.fp-countdown-value {
+  font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.fp-ruler-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.000px;
+}
+
+.fp-ruler-label {
+  font-size: 10.000px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.fp-ruler-track {
+  position: relative;
+  height: 3.000px;
+  margin-top: 4.000px;
+  border-radius: 1.500px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.fp-ruler-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 1.500px;
+  background: linear-gradient(90deg, #d1553a, #ee5a2e);
+}
+
+.fp-ruler-knob {
+  position: absolute;
+  top: 50%;
+  width: 9.000px;
+  height: 9.000px;
+  margin-left: -4.500px;
+  border-radius: 50%;
+  background: #ee5a2e;
+  border: 1.500px solid rgba(255, 255, 255, 0.85);
+  transform: translateY(-50%);
+  box-sizing: border-box;
+}
+
+/* 状态二：性能监控 */
+.fp-perf {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.fp-hz {
+  font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.fp-net {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.fp-net-line {
+  font-size: 11.000px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;
+}
+.tabbar-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0 12.000px calc(8.000px + env(safe-area-inset-bottom));
+}
+
+.tabbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62.000px;
+  border-radius: 31.000px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6.000px 17.000px rgba(120, 140, 180, 0.22);
+  padding: 0 5.000px;
+}
+
+.tab-item {
+  flex: 1 1 0;
+  max-width: 110.000px;
+  height: 50.000px;
+  margin: 0 3.000px;
+  border-radius: 15.000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-on {
+  background: linear-gradient(180deg, #e8f1ff 0%, #dfeafd 100%);
+}
+
+.tab-icon {
+  width: 22.000px;
+  height: 22.000px;
+}
+
+.tab-text {
+  margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #2c3140;
+  white-space: nowrap;
+}
+
+.tab-on .tab-text {
+  color: #2f6fd0;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+<div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:24px;height:44px;"><div class="nav-row"><span class="nav-title">悬浮时钟</span></div></div><div class="page-body"><div class="event-card card-normal"><div class="ribbon"><img class="ribbon-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIuNyAzYy45IDMuMS0yLjMgNC4yLTIuMyA2LjQgMCAxLjEuOCAyIDEuOCAyIDEuNSAwIDIuNC0xLjUgMi4xLTMuMiAyLjQgMS44IDMuOCA0LjEgMy44IDYuNSAwIDMuNC0yLjggNi4yLTYuMiA2LjJzLTYuMi0yLjgtNi4yLTYuMkM1LjcgMTAuMSAxMC4zIDggMTIuNyAzWiIgZmlsbD0iIzRhYThmMCIvPjwvc3ZnPg=="></div><div class="event-head"><div class="event-thumb"><img class="event-thumb-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj48cmVjdCB4PSIzLjYiIHk9IjUuMiIgd2lkdGg9IjE2LjgiIGhlaWdodD0iMTMuNiIgcng9IjIuOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxwYXRoIGQ9Ik0zLjYgOS44aDE2LjgiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxLjgiLz48cGF0aCBkPSJNNy40IDEzLjhoNiIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><span class="event-title">【淘宝】茅台（MOUTAI）飞天 53%vol 500ml 贵州茅台酒</span></div><div class="event-mid"><div class="price"><span class="price-sym">¥</span><span class="price-num mono">1499.00</span></div><span class="cd-label">倒计时</span></div><div class="event-foot"><span class="event-target">1天后 20:00:00</span><div class="digits"><div class="digit mono">23</div><span class="colon">:</span><div class="digit mono">53</div><span class="colon">:</span><div class="digit mono">37</div><div class="digit digit-last mono">5</div></div></div></div><div class="ring-wrap"><div class="ring" style="width:250.000px;height:250.000px;"><canvas id="ring" class="ring-canvas"></canvas><div class="ring-center"><div class="ring-badge"><img class="ring-badge-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU0IiBoZWlnaHQ9IjU0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEzLjEiIHI9IjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIvPjxwYXRoIGQ9Ik0xMiA5Ljl2My40bDIuMyAxLjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhmOTVjNiIgc3Ryb2tlLXdpZHRoPSIxLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik00LjMgNi4zIDYuNiA0TTE5LjcgNi4zIDE3LjQgNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><div class="ring-time mono">20:06:22.5</div><div class="ring-sub">北京时间</div></div></div></div><div class="quick-panel"><div class="quick-circle"><img class="quick-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTkuNiAxMmE3LjYgNy42IDAgMSAxLTIuNS01LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuNnY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTIgOC42djMuNmwyLjggMS43IiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="quick-texts"><span class="quick-title">时间源</span><span class="quick-sub">北京时间</span></div><img class="quick-chevron" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIj48cGF0aCBkPSJNOS44IDUuNiAxNS40IDEybC01LjYgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiNiN2JkYzkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+"></div><div class="collapse"><img class="collapse-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM4IiBoZWlnaHQ9IjM4Ij48cGF0aCBkPSJNNi4yIDE0LjQgMTIgOC44bDUuOCA1LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzdjODQ5NyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="primary-btn">
+      开启悬浮窗
+    </div></div></div><div class="tabbar-wrap"><div class="tabbar"><div class="tab-item tab-on"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="tab-text">时钟</span></div><div class="tab-item "><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48cGF0aCBkPSJNOC40IDMuMiAxNy42IDEyLjRsLTQuNi42LTIuNCA0LjR6IiBmaWxsPSIjMmMzMTQwIi8+PHBhdGggZD0iTTE1LjQgMTUuMmMuOSAxLjEgMS40IDIuNCAxLjQgMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTguNCAxMy4yYzEuNiAxLjkgMi41IDQuMSAyLjUgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">点击</span></div><div class="tab-item "><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">我的</span></div></div></div>
+<script>
+var RING_BODY = "\n      const ctx = this.ctx\n      if (!ctx) return\n      const dpr = this.dpr\n      const w = this.w\n      const h = this.h\n      const cx = w / 2\n      const cy = h / 2\n      const R = Math.min(w, h) / 2 - 2\n\n      const now = Date.now()\n      const p = time.parts(now, this.data.source, this.data.serverOffset)\n      // 进度弧 = 当前分钟内已走过的秒数（秒针扫一圈）\n      const progress = (p.seconds + p.ms / 1000) / 60\n\n      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)\n      ctx.clearRect(0, 0, w, h)\n\n      // 1. 外圈底盘（带阴影）\n      ctx.save()\n      ctx.shadowColor = 'rgba(118, 136, 178, 0.30)'\n      ctx.shadowBlur = R * 0.17\n      ctx.shadowOffsetY = R * 0.055\n      ctx.beginPath()\n      ctx.arc(cx, cy, R, 0, Math.PI * 2)\n      const g0 = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R)\n      g0.addColorStop(0, '#ffffff')\n      g0.addColorStop(0.45, '#fbfcfe')\n      g0.addColorStop(1, '#e8ecf5')\n      ctx.fillStyle = g0\n      ctx.fill()\n      ctx.restore()\n\n      // 2. 内盘\n      const rIn = R * 0.88\n      ctx.beginPath()\n      ctx.arc(cx, cy, rIn, 0, Math.PI * 2)\n      const g1 = ctx.createRadialGradient(cx, cy - rIn * 0.5, rIn * 0.12, cx, cy, rIn * 1.04)\n      g1.addColorStop(0, '#ffffff')\n      g1.addColorStop(0.72, '#f7f8fc')\n      g1.addColorStop(1, '#eef1f8')\n      ctx.fillStyle = g1\n      ctx.fill()\n\n      // 3. 内盘与刻度环之间的高光分隔线\n      ctx.beginPath()\n      ctx.arc(cx, cy, rIn + (R - rIn) * 0.42, 0, Math.PI * 2)\n      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'\n      ctx.lineWidth = 1\n      ctx.stroke()\n\n      // 4. 刻度：60 格，每 5 格加长\n      const N = 60\n      const outer = R * 0.982\n      for (let i = 0; i < N; i++) {\n        const a = -Math.PI / 2 + (i * 2 * Math.PI) / N\n        const major = i % 5 === 0\n        const inner = outer - (major ? R * 0.062 : R * 0.036)\n        ctx.beginPath()\n        ctx.lineCap = 'round'\n        ctx.lineWidth = major ? Math.max(2, R * 0.0135) : Math.max(1.2, R * 0.0075)\n        ctx.strokeStyle = major ? 'rgba(72, 84, 124, 0.34)' : 'rgba(72, 84, 124, 0.15)'\n        ctx.moveTo(cx + Math.cos(a) * outer, cy + Math.sin(a) * outer)\n        ctx.lineTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner)\n        ctx.stroke()\n      }\n\n      // 5. 进度弧\n      const rArc = R * 0.862\n      const start = -Math.PI / 2\n      if (progress > 0.004) {\n        ctx.beginPath()\n        ctx.arc(cx, cy, rArc, start, start + progress * Math.PI * 2)\n        const g2 = ctx.createLinearGradient(cx - R, cy - R, cx + R * 0.7, cy + R)\n        g2.addColorStop(0, '#c6cdf6')\n        g2.addColorStop(0.5, '#b4bdf2')\n        g2.addColorStop(1, '#a3aff0')\n        ctx.strokeStyle = g2\n        ctx.lineWidth = Math.max(3, R * 0.026)\n        ctx.lineCap = 'round'\n        ctx.stroke()\n      }\n\n      // 6. 四色定位点\n      const dots = [\n        { a: -90, c: '#4fd4e8' },\n        { a: 0, c: '#8b7ce0' },\n        { a: 90, c: '#4fd4e8' },\n        { a: 180, c: '#f2a2b8' }\n      ]\n      for (let i = 0; i < dots.length; i++) {\n        const a = (dots[i].a * Math.PI) / 180\n        ctx.beginPath()\n        ctx.arc(cx + Math.cos(a) * R * 0.93, cy + Math.sin(a) * R * 0.93, Math.max(2.6, R * 0.022), 0, Math.PI * 2)\n        ctx.fillStyle = dots[i].c\n        ctx.fill()\n      }\n\n      // 7. 文字（变化时才 setData）\n      const text = time.formatClock(p)\n      const sub = this.data.label || time.sourceLabel(this.data.source)\n      if (text !== this._lastText || sub !== this._lastSub) {\n        this._lastText = text\n        this._lastSub = sub\n        this.setData({ timeText: text, subText: sub })\n        this.triggerEvent('tick', { text: text, sub: sub })\n      }\n    ";
+var TIME_SRC = "// 时间计算：北京时间 / 本机时间 / 服务器时间（带漂移校准）\nconst BJ_OFFSET = 8 * 60 * 60 * 1000\nconst DAY = 24 * 60 * 60 * 1000\n\nconst SOURCE_LABEL = {\n  beijing: '北京时间',\n  device: '本机时间',\n  server: '服务器时间'\n}\n\nfunction pad(n, len) {\n  let s = String(Math.floor(Math.abs(n)))\n  const width = len || 2\n  while (s.length < width) s = '0' + s\n  return s\n}\n\n// 返回目标时区的“挂钟”字段\nfunction parts(epochMs, source, serverOffset) {\n  const offset = serverOffset || 0\n  let d\n  let utc = false\n  if (source === 'beijing') {\n    d = new Date(epochMs + BJ_OFFSET)\n    utc = true\n  } else if (source === 'server') {\n    d = new Date(epochMs + offset)\n  } else {\n    d = new Date(epochMs)\n  }\n  const g = (name) => (utc ? d['getUTC' + name]() : d['get' + name]())\n  return {\n    year: g('FullYear'),\n    month: g('Month') + 1,\n    date: g('Date'),\n    day: g('Day'),\n    hours: g('Hours'),\n    minutes: g('Minutes'),\n    seconds: g('Seconds'),\n    ms: g('Milliseconds')\n  }\n}\n\nfunction sourceLabel(source) {\n  return SOURCE_LABEL[source] || SOURCE_LABEL.beijing\n}\n\n// 走时文本：HH:MM:SS.d（十分位）\nfunction formatClock(p) {\n  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds) + '.' + Math.floor(p.ms / 100)\n}\n\n// 倒计时拆分（用于卡片数字块）\nfunction countdownParts(targetTs, epochMs) {\n  const remain = Math.max(0, (targetTs || epochMs) - epochMs)\n  return {\n    h: pad(Math.floor(remain / 3600000) % 100),\n    m: pad(Math.floor(remain / 60000) % 60),\n    s: pad(Math.floor(remain / 1000) % 60),\n    t: String(Math.floor((remain % 1000) / 100)),\n    remain\n  }\n}\n\nfunction countdownText(targetTs, epochMs) {\n  const c = countdownParts(targetTs, epochMs)\n  return c.h + ':' + c.m + ':' + c.s\n}\n\n// 以北京时间为基准的当日某个时刻的时间戳\nfunction beijingEpochOf(h, m, s, epochMs) {\n  const p = parts(epochMs, 'beijing')\n  return Date.UTC(p.year, p.month - 1, p.date, h || 0, m || 0, s || 0, 0) - BJ_OFFSET\n}\n\n// 下一次北京时间 hh:mm:ss（当天已过则顺延一天）\nfunction nextBeijing(h, m, s, epochMs) {\n  const now = epochMs || Date.now()\n  let t = beijingEpochOf(h, m, s, now)\n  while (t <= now) t += DAY\n  return t\n}\n\n// 目标日期相对今天的天数描述\nfunction dayOffsetLabel(targetTs, epochMs) {\n  const a = parts(epochMs || Date.now(), 'beijing')\n  const b = parts(targetTs, 'beijing')\n  const da = Date.UTC(a.year, a.month - 1, a.date)\n  const db = Date.UTC(b.year, b.month - 1, b.date)\n  const diff = Math.round((db - da) / DAY)\n  if (diff <= 0) return '今天'\n  return diff + '天后'\n}\n\nfunction clockLabel(ts) {\n  const p = parts(ts, 'beijing')\n  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds)\n}\n\nfunction dateLabel(ts) {\n  const p = parts(ts, 'beijing')\n  return p.month + '月' + p.date + '日'\n}\n\nfunction fullLabel(ts) {\n  const p = parts(ts, 'beijing')\n  return p.year + '-' + pad(p.month) + '-' + pad(p.date) + ' ' + pad(p.hours) + ':' + pad(p.minutes)\n}\n\n// 解析 \"20:00:00\"\nfunction parseHMS(text) {\n  const arr = String(text || '20:00:00').split(':').map(function (v) { return parseInt(v, 10) || 0 })\n  return { h: arr[0] || 0, m: arr[1] || 0, s: arr[2] || 0 }\n}\n\nmodule.exports = {\n  BJ_OFFSET: BJ_OFFSET,\n  DAY: DAY,\n  pad: pad,\n  parts: parts,\n  sourceLabel: sourceLabel,\n  formatClock: formatClock,\n  countdownParts: countdownParts,\n  countdownText: countdownText,\n  beijingEpochOf: beijingEpochOf,\n  nextBeijing: nextBeijing,\n  dayOffsetLabel: dayOffsetLabel,\n  clockLabel: clockLabel,\n  dateLabel: dateLabel,\n  fullLabel: fullLabel,\n  parseHMS: parseHMS\n}";
+var time = (function () { var module = { exports: {} }; var exports = module.exports; // 时间计算：北京时间 / 本机时间 / 服务器时间（带漂移校准）
+const BJ_OFFSET = 8 * 60 * 60 * 1000
+const DAY = 24 * 60 * 60 * 1000
+
+const SOURCE_LABEL = {
+  beijing: '北京时间',
+  device: '本机时间',
+  server: '服务器时间'
+}
+
+function pad(n, len) {
+  let s = String(Math.floor(Math.abs(n)))
+  const width = len || 2
+  while (s.length < width) s = '0' + s
+  return s
+}
+
+// 返回目标时区的“挂钟”字段
+function parts(epochMs, source, serverOffset) {
+  const offset = serverOffset || 0
+  let d
+  let utc = false
+  if (source === 'beijing') {
+    d = new Date(epochMs + BJ_OFFSET)
+    utc = true
+  } else if (source === 'server') {
+    d = new Date(epochMs + offset)
+  } else {
+    d = new Date(epochMs)
+  }
+  const g = (name) => (utc ? d['getUTC' + name]() : d['get' + name]())
+  return {
+    year: g('FullYear'),
+    month: g('Month') + 1,
+    date: g('Date'),
+    day: g('Day'),
+    hours: g('Hours'),
+    minutes: g('Minutes'),
+    seconds: g('Seconds'),
+    ms: g('Milliseconds')
+  }
+}
+
+function sourceLabel(source) {
+  return SOURCE_LABEL[source] || SOURCE_LABEL.beijing
+}
+
+// 走时文本：HH:MM:SS.d（十分位）
+function formatClock(p) {
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds) + '.' + Math.floor(p.ms / 100)
+}
+
+// 倒计时拆分（用于卡片数字块）
+function countdownParts(targetTs, epochMs) {
+  const remain = Math.max(0, (targetTs || epochMs) - epochMs)
+  return {
+    h: pad(Math.floor(remain / 3600000) % 100),
+    m: pad(Math.floor(remain / 60000) % 60),
+    s: pad(Math.floor(remain / 1000) % 60),
+    t: String(Math.floor((remain % 1000) / 100)),
+    remain
+  }
+}
+
+function countdownText(targetTs, epochMs) {
+  const c = countdownParts(targetTs, epochMs)
+  return c.h + ':' + c.m + ':' + c.s
+}
+
+// 以北京时间为基准的当日某个时刻的时间戳
+function beijingEpochOf(h, m, s, epochMs) {
+  const p = parts(epochMs, 'beijing')
+  return Date.UTC(p.year, p.month - 1, p.date, h || 0, m || 0, s || 0, 0) - BJ_OFFSET
+}
+
+// 下一次北京时间 hh:mm:ss（当天已过则顺延一天）
+function nextBeijing(h, m, s, epochMs) {
+  const now = epochMs || Date.now()
+  let t = beijingEpochOf(h, m, s, now)
+  while (t <= now) t += DAY
+  return t
+}
+
+// 目标日期相对今天的天数描述
+function dayOffsetLabel(targetTs, epochMs) {
+  const a = parts(epochMs || Date.now(), 'beijing')
+  const b = parts(targetTs, 'beijing')
+  const da = Date.UTC(a.year, a.month - 1, a.date)
+  const db = Date.UTC(b.year, b.month - 1, b.date)
+  const diff = Math.round((db - da) / DAY)
+  if (diff <= 0) return '今天'
+  return diff + '天后'
+}
+
+function clockLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds)
+}
+
+function dateLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.month + '月' + p.date + '日'
+}
+
+function fullLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.year + '-' + pad(p.month) + '-' + pad(p.date) + ' ' + pad(p.hours) + ':' + pad(p.minutes)
+}
+
+// 解析 "20:00:00"
+function parseHMS(text) {
+  const arr = String(text || '20:00:00').split(':').map(function (v) { return parseInt(v, 10) || 0 })
+  return { h: arr[0] || 0, m: arr[1] || 0, s: arr[2] || 0 }
+}
+
+module.exports = {
+  BJ_OFFSET: BJ_OFFSET,
+  DAY: DAY,
+  pad: pad,
+  parts: parts,
+  sourceLabel: sourceLabel,
+  formatClock: formatClock,
+  countdownParts: countdownParts,
+  countdownText: countdownText,
+  beijingEpochOf: beijingEpochOf,
+  nextBeijing: nextBeijing,
+  dayOffsetLabel: dayOffsetLabel,
+  clockLabel: clockLabel,
+  dateLabel: dateLabel,
+  fullLabel: fullLabel,
+  parseHMS: parseHMS
+}; return module.exports; })();
+var FIXED = 1789387582500;
+function drawRing() {
+  var canvas = document.getElementById("ring");
+  if (!canvas) return;
+  var dpr = 2, w = 250, h = 250;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + "px"; canvas.style.height = h + "px";
+  var ctx = canvas.getContext("2d");
+  var self = {
+    ctx: ctx, dpr: dpr, w: w, h: h,
+    data: { source: "beijing", serverOffset: 0 },
+    setData: function (o) {
+      if (o.timeText !== undefined) { var e = document.querySelector(".ring-time"); if (e) e.textContent = o.timeText; }
+      if (o.subText !== undefined) { var s = document.querySelector(".ring-sub"); if (s) s.textContent = o.subText; }
+    },
+    triggerEvent: function () {}
+  };
+  var fn = new Function("time", "return function () {" + RING_BODY + "}")(time);
+  var real = Date.now;
+  Date.now = function () { return FIXED; };
+  fn.call(self);
+  Date.now = real;
+}
+drawRing();
+</script>
+</body>
+</html>

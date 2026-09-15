@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F1320">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="悬浮时钟"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="毫秒级走时 + 抢购倒计时，可悬浮在桌面与其它应用之上"
+            android:textColor="#8B93A7"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvPerm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:textColor="#E8ECF6"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btnGrant"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="@string/btn_grant" />
+
+        <Button
+            android:id="@+id/btnToggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/btn_start" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:textColor="#8B93A7"
+            android:textSize="12sp"
+            android:lineSpacingExtra="4dp"
+            android:text="说明：\n1. 首次使用需在系统设置里授予「显示在其他应用上层」权限；\n2. 开启后通知栏会出现常驻通知，可用其中的「停止」或悬浮窗上的 × 关闭；\n3. 悬浮窗为原生实现，因此可以覆盖桌面、微信等其它应用；\n4. 微信小程序无法做到这一点（沙箱内没有系统级悬浮窗 API）。" />
+    </LinearLayout>
+</ScrollView>

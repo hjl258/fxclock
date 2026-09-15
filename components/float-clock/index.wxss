@@ -1,0 +1,176 @@
+/* 深色卡片：自己就是唯一可交互元素 */
+.float-pill {
+  position: fixed;
+  z-index: 200;
+  box-sizing: border-box;
+  padding: 14rpx 20rpx 12rpx;
+  border-radius: 26rpx;
+  background: linear-gradient(165deg, #4a5464 0%, #3c4553 45%, #333b48 100%);
+  box-shadow: 0 16rpx 36rpx rgba(10, 14, 24, 0.42), inset 0 0 0 1rpx rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* 顶部：延迟 + 时间源 */
+.fp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 左半边：延迟与「点击」状态在同一组，时间源仍靠右 */
+.fp-head-left {
+  display: flex;
+  align-items: center;
+}
+
+.fp-latency {
+  flex: none;
+}
+
+/* 「点击」+ 状态圆：扫描定时点击列表，存在 ±5 分钟内的项 → 绿点，否则红点 */
+.fp-click {
+  display: flex;
+  align-items: center;
+  margin-left: 16rpx;
+}
+
+.fp-click-label {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 1rpx;
+}
+
+.fp-click-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  margin-left: 8rpx;
+}
+
+.fp-click-dot-on {
+  background: #37b24d;
+  box-shadow: 0 0 12rpx rgba(55, 178, 77, 0.95);
+}
+
+.fp-click-dot-off {
+  background: #ef5b45;
+  box-shadow: 0 0 12rpx rgba(239, 91, 69, 0.85);
+}
+
+.fp-latency {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 1rpx;
+}
+
+.fp-source {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 1rpx;
+}
+
+/* 中间：大字时间，最后一位橙色 */
+.fp-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-top: 2rpx;
+}
+
+.fp-time {
+  font-size: 60rpx;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 1rpx;
+  line-height: 1;
+}
+
+.fp-tenth {
+  font-size: 68rpx;
+  font-weight: 700;
+  color: #ee5a2e;
+  line-height: 1;
+  margin-left: 2rpx;
+}
+
+/* 底部区：高度固定，内容在「刻度尺」与「开抢倒计时」之间切换，避免卡片跳动 */
+.fp-bottom {
+  width: 100%;
+  height: 62rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.fp-hide {
+  /* 用 !important 保证不被后面的 .fp-countdown{display:flex} 覆盖 */
+  display: none !important;
+}
+
+.fp-ruler-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rpx;
+}
+
+.fp-ruler-label {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.fp-ruler-track {
+  position: relative;
+  height: 6rpx;
+  margin-top: 8rpx;
+  border-radius: 3rpx;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.fp-ruler-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 3rpx;
+  background: linear-gradient(90deg, #d1553a, #ee5a2e);
+}
+
+.fp-ruler-knob {
+  position: absolute;
+  top: 50%;
+  width: 18rpx;
+  height: 18rpx;
+  margin-left: -9rpx;
+  border-radius: 50%;
+  background: #ee5a2e;
+  border: 3rpx solid rgba(255, 255, 255, 0.85);
+  transform: translateY(-50%);
+  box-sizing: border-box;
+}
+
+/* 状态二：性能监控 */
+.fp-perf {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.fp-hz {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.fp-net {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.fp-net-line {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;
+}

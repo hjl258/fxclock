@@ -1,0 +1,47 @@
+<view
+wx:if="{{show}}"
+class="float-pill"
+style="left:{{x}}px;top:{{y}}px;width:{{w}}px;height:{{h}}px;"
+bindtouchstart="onDragStart"
+catchtouchmove="onDragMove"
+bindtouchend="onDragEnd"
+bindtouchcancel="onDragEnd"
+>
+  <!-- 顶行：延迟 + 定时点击状态圆 + 时间源 -->
+  <view class="fp-head">
+    <view class="fp-head-left">
+      <text class="fp-latency">{{latencyText}}</text>
+      <view class="fp-click">
+        <text class="fp-click-label">点击</text>
+        <!-- 绿点=定时列表里存在「距当前时刻 ±5 分钟」的项；红点=没有 -->
+        <view class="fp-click-dot {{nearOn ? 'fp-click-dot-on' : 'fp-click-dot-off'}}"></view>
+      </view>
+    </view>
+    <text class="fp-source">{{label}}</text>
+  </view>
+
+  <view class="fp-main">
+    <text class="fp-time mono">{{timeMain}}</text>
+    <text class="fp-tenth mono">{{timeTenth}}</text>
+  </view>
+
+  <!-- 底部区高度固定（预留刻度位置，卡片不跳动）
+       每分钟最后 2.5 秒：自动换成倒计时刻度尺，游标随秒走动
+       其余时间：性能监控（刷新率 + 上下行网速） -->
+  <view class="fp-bottom">
+    <view class="fp-ruler-labels {{rulerVisible ? '' : 'fp-hide'}}">
+      <text class="fp-ruler-label" wx:for="{{rulerLabels}}" wx:key="*this">{{item}}</text>
+    </view>
+    <view class="fp-ruler-track {{rulerVisible ? '' : 'fp-hide'}}">
+      <view class="fp-ruler-fill" style="width:{{sweepPercent}}%"></view>
+      <view class="fp-ruler-knob" style="left:{{sweepPercent}}%"></view>
+    </view>
+    <view class="fp-perf {{rulerVisible ? 'fp-hide' : ''}}">
+      <text class="fp-hz">{{hzText}}</text>
+      <view class="fp-net">
+        <text class="fp-net-line">↑ {{upText}} KB/s</text>
+        <text class="fp-net-line">↓ {{downText}} KB/s</text>
+      </view>
+    </view>
+  </view>
+</view>

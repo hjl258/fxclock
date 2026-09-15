@@ -1,0 +1,20 @@
+<!-- 表盘 / 刻度 / 进度弧全部用 DOM + SVG 画，不用 canvas。
+     原因：canvas 在部分 iOS 与开发者工具环境下会被渲染成「最上层的原生层」，
+     任何 DOM（表盘中央的文字、悬浮窗）都会被它盖住 —— 表现为
+     「圆盘时钟里没有内容」+「悬浮窗被钟面压住」。
+     换成 <image> 渲染 SVG 后就是普通 DOM，层级按 z-index 走，矢量也不糊。 -->
+<view class="ring" style="width:{{size}}rpx;height:{{size}}rpx;">
+  <view class="ring-face"></view>
+  <view class="ring-face-inner"></view>
+  <view class="ring-face-line"></view>
+  <image class="ring-ticks" src="{{ticksSvg}}" mode="scaleToFill"></image>
+  <image class="ring-arc" src="{{arcSvg}}" mode="scaleToFill"></image>
+
+  <view class="ring-center">
+    <view class="ring-badge">
+      <image class="ring-badge-icon" src="{{badgeIcon}}" mode="aspectFit"></image>
+    </view>
+    <view class="ring-time mono">{{timeText}}</view>
+    <view class="ring-sub">{{subText}}</view>
+  </view>
+</view>

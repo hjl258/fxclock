@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>悬浮窗 · 刻度尺态</title>
+<style>
+html, body { margin: 0; padding: 0; width: 375px; }
+img { object-fit: contain; display: block; }
+.switch-el { -webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 12px; background: #e2e6ee; position: relative; }
+.switch-el:checked { background: #3b7ff0; }
+.switch-el::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+.switch-el:checked::after { left: 20px; }
+body {
+  background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.body {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* 背景：柔和径向渐变 + 斜向光带 */
+.bg {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);
+}
+
+.bg-band {
+  position: fixed;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);
+}
+
+.page-body {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;
+}
+
+/* 自定义导航栏 */
+.nav {
+  position: relative;
+  z-index: 2;
+  box-sizing: content-box;
+}
+
+.nav-row {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;
+}
+
+.nav-title {
+  font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;
+}
+
+.nav-gap {
+  flex: 1;
+}
+
+
+
+.tap {
+  opacity: 0.7;
+}
+
+/* 通用卡片 */
+.card-skin {
+  background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);
+}
+
+/* 主按钮 */
+.primary-btn {
+  margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 分段控件 */
+.seg {
+  display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;
+}
+
+.seg-item {
+  padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;
+}
+
+.seg-on {
+  background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);
+}
+
+.seg-lg .seg-item {
+  flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;
+}
+
+/* 行设置 */
+.row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);
+}
+
+.row-item:last-child {
+  border-bottom: none;
+}
+
+.row-label {
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+.row-value {
+  font-size: 13.000px;
+  color: #8b93a7;
+}
+
+.switch-s {
+  transform: scale(0.78);
+}
+
+/* 底部弹层 */
+.mask {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  /* 必须高于自定义 TabBar(z-index 60)，否则弹层会被底栏压住 */
+  z-index: 300;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  /* 只留左右内边距：上下留白挪进标题栏/滚动区，否则弹层边缘会出现
+     既不能滚、又会把触摸放给页面的死区 */
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 78vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 滚动交给里面的 scroll-view，页面本身不再滚 */
+}
+
+/* 弹层主体：撑满剩余高度，自身可滚
+   （真机的滚动由 <scroll-view scroll-y> 处理，overflow 是给网页预览兜底的） */
+.sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));
+}
+
+.sheet-head {
+  padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;
+}
+
+.sheet-title {
+  font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;
+}
+
+.sheet-close {
+  width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;
+}
+
+.sheet-group {
+  margin-top: 13.000px;
+}
+
+.sheet-group-title {
+  font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;
+}
+
+.radio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);
+}
+
+.radio-row:last-child {
+  border-bottom: none;
+}
+
+.radio-label {
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+.radio-icon {
+  width: 20.000px;
+  height: 20.000px;
+}
+
+/* 页面级标题 */
+.section-title {
+  display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;
+}
+
+.section-title-main {
+  font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;
+}
+
+.section-title-sub {
+  margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.mono {
+  font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+/* ---------- 抢购卡片 ---------- */
+.event-card {
+  position: relative;
+  margin: 11.000px 14.000px 0;
+  padding: 13.000px 13.000px 11.000px;
+  border-radius: 14.000px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #eef6fe 0%, #e8f0fd 58%, #eaf1fb 100%);
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.12);
+}
+
+.ribbon {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 33.000px;
+  height: 33.000px;
+  border-bottom-left-radius: 13.000px;
+  background: linear-gradient(180deg, #ddecfd 0%, #cbe0fc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ribbon-icon {
+  width: 18.000px;
+  height: 18.000px;
+  margin-left: 4.000px;
+  margin-top: -3.000px;
+}
+
+.event-head {
+  display: flex;
+  align-items: center;
+  padding-right: 30.000px;
+}
+
+.event-thumb {
+  flex: none;
+  width: 23.000px;
+  height: 23.000px;
+  border-radius: 6.500px;
+  margin-right: 8.000px;
+  background: linear-gradient(160deg, #5aa9f6 0%, #2f78ee 100%);
+  box-shadow: 0 3.000px 7.000px rgba(47, 120, 238, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-thumb-icon {
+  width: 15.000px;
+  height: 15.000px;
+}
+
+.event-title {
+  flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.event-mid {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 9.000px;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  color: #ff6a00;
+}
+
+.price-sym {
+  font-size: 13.000px;
+  font-weight: 600;
+  margin-right: 2.000px;
+}
+
+.price-num {
+  font-size: 21.000px;
+  font-weight: 700;
+  letter-spacing: 0.500px;
+}
+
+.cd-label {
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.event-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8.000px;
+}
+
+.event-target {
+  font-size: 13.000px;
+  color: #8b93a7;
+}
+
+.digits {
+  display: flex;
+  align-items: center;
+}
+
+.digit {
+  min-width: 28.000px;
+  height: 28.000px;
+  padding: 0 3.000px;
+  border-radius: 6.000px;
+  background: #ffffff;
+  box-shadow: 0 2.000px 6.000px rgba(120, 150, 200, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16.000px;
+  font-weight: 700;
+  color: #1b1f2a;
+}
+
+.colon {
+  font-size: 13.000px;
+  color: #8b93a7;
+  margin: 0 4.000px;
+}
+
+.digit-last {
+  margin-left: 9.000px;
+  min-width: 24.000px;
+}
+
+.card-live {
+  background: linear-gradient(150deg, #fff1ec 0%, #ffe7e0 100%);
+  box-shadow: 0 6.000px 15.000px rgba(255, 120, 80, 0.18);
+}
+
+.card-live .cd-label,
+.card-live .price,
+.card-live .price-num {
+  color: #ff4d2d;
+}
+
+.card-done {
+  opacity: 0.72;
+}
+
+/* ---------- 环形时钟 ---------- */
+.ring-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 28.000px;
+}
+
+/* ---------- 时间源 ---------- */
+.quick-panel {
+  display: flex;
+  align-items: center;
+  margin: 36.000px 14.000px 0;
+  padding: 11.000px 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);
+}
+
+.quick-circle {
+  flex: none;
+  width: 48.000px;
+  height: 48.000px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fdfeff 0%, #eef1f8 100%);
+  box-shadow: 0 4.000px 10.000px rgba(140, 160, 200, 0.16), inset 0 0 0 0.500px rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-icon {
+  width: 22.000px;
+  height: 22.000px;
+}
+
+.quick-texts {
+  flex: 1;
+  margin-left: 11.000px;
+}
+
+.quick-title {
+  display: block;
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+.quick-sub {
+  display: block;
+  margin-top: 3.000px;
+  font-size: 12.000px;
+  color: #8b93a7;
+}
+
+.quick-chevron {
+  width: 15.000px;
+  height: 15.000px;
+}
+
+/* ---------- 收起 / 展开 ---------- */
+.collapse {
+  display: flex;
+  justify-content: center;
+  margin: 15.000px 0 3.000px;
+}
+
+.collapse-icon {
+  width: 18.000px;
+  height: 18.000px;
+  opacity: 0.6;
+}
+
+.panel {
+  margin: 6.000px 14.000px 0;
+  padding: 2.000px 13.000px;
+  border-radius: 12.000px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 5.000px 12.000px rgba(140, 160, 200, 0.12);
+}
+
+.panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 50.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);
+}
+
+.panel-row:last-child {
+  border-bottom: none;
+}
+
+.panel-label {
+  font-size: 14.000px;
+  color: #2c3140;
+}
+
+/* ---------- 弹层补充 ---------- */
+.radio-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.radio-desc {
+  margin-top: 3.000px;
+  font-size: 11.000px;
+  color: #98a0b3;
+}
+
+.sheet-btn {
+  margin-top: 20.000px;
+}
+/* 环形时钟：纯 DOM + SVG（尺寸基准 250.000px，与 utils/ringSvg.js 的 500 单位一一对应） */
+.ring {
+  position: relative;
+}
+
+/* 外盘：渐变底 + 投影（原 canvas 第 1 步） */
+.ring-face {
+  position: absolute;
+  left: 2.000px;
+  top: 2.000px;
+  right: 2.000px;
+  bottom: 2.000px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffffff 0%, #fbfcfe 45%, #e8ecf5 100%);
+  box-shadow: 0 7.000px 21.000px rgba(118, 136, 178, 0.30);
+}
+
+/* 内盘：径向渐变（原 canvas 第 2 步） */
+.ring-face-inner {
+  position: absolute;
+  left: 16.750px;
+  top: 16.750px;
+  right: 16.750px;
+  bottom: 16.750px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 28%, #ffffff 0%, #f7f8fc 72%, #eef1f8 100%);
+}
+
+/* 内外盘之间的高光分隔线（原 canvas 第 3 步） */
+.ring-face-line {
+  position: absolute;
+  left: 10.500px;
+  top: 10.500px;
+  right: 10.500px;
+  bottom: 10.500px;
+  border-radius: 50%;
+  border: 1.000px solid rgba(255, 255, 255, 0.85);
+}
+
+/* 刻度 + 四色定位点（静态 SVG，只算一次） */
+.ring-ticks,
+.ring-arc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 中央内容必须压在所有图形之上 */
+.ring-center {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-badge {
+  width: 46.000px;
+  height: 46.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(180deg, #f2f4ff 0%, #e9ecfb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 13.000px;
+}
+
+.ring-badge-icon {
+  width: 25.000px;
+  height: 25.000px;
+}
+
+.ring-time {
+  font-size: 36.000px;
+  font-weight: 700;
+  color: #1b1f2a;
+  letter-spacing: 0.500px;
+  line-height: 1;
+}
+
+.ring-sub {
+  margin-top: 10.000px;
+  font-size: 13.000px;
+  color: #98a0b3;
+  letter-spacing: 0.500px;
+}
+
+/* 深色卡片：自己就是唯一可交互元素 */
+.float-pill {
+  position: fixed;
+  z-index: 200;
+  box-sizing: border-box;
+  padding: 7.000px 10.000px 6.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(165deg, #4a5464 0%, #3c4553 45%, #333b48 100%);
+  box-shadow: 0 8.000px 18.000px rgba(10, 14, 24, 0.42), inset 0 0 0 0.500px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* 顶部：延迟 + 时间源 */
+.fp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 左半边：延迟与「点击」状态在同一组，时间源仍靠右 */
+.fp-head-left {
+  display: flex;
+  align-items: center;
+}
+
+.fp-latency {
+  flex: none;
+}
+
+/* 「点击」+ 状态圆：扫描定时点击列表，存在 ±5 分钟内的项 → 绿点，否则红点 */
+.fp-click {
+  display: flex;
+  align-items: center;
+  margin-left: 8.000px;
+}
+
+.fp-click-label {
+  font-size: 11.000px;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.500px;
+}
+
+.fp-click-dot {
+  width: 8.000px;
+  height: 8.000px;
+  border-radius: 50%;
+  margin-left: 4.000px;
+}
+
+.fp-click-dot-on {
+  background: #37b24d;
+  box-shadow: 0 0 6.000px rgba(55, 178, 77, 0.95);
+}
+
+.fp-click-dot-off {
+  background: #ef5b45;
+  box-shadow: 0 0 6.000px rgba(239, 91, 69, 0.85);
+}
+
+.fp-latency {
+  font-size: 12.000px;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.500px;
+}
+
+.fp-source {
+  font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.500px;
+}
+
+/* 中间：大字时间，最后一位橙色 */
+.fp-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-top: 1.000px;
+}
+
+.fp-time {
+  font-size: 30.000px;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 0.500px;
+  line-height: 1;
+}
+
+.fp-tenth {
+  font-size: 34.000px;
+  font-weight: 700;
+  color: #ee5a2e;
+  line-height: 1;
+  margin-left: 1.000px;
+}
+
+/* 底部区：高度固定，内容在「刻度尺」与「开抢倒计时」之间切换，避免卡片跳动 */
+.fp-bottom {
+  width: 100%;
+  height: 31.000px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.fp-hide {
+  /* 用 !important 保证不被后面的 .fp-countdown{display:flex} 覆盖 */
+  display: none !important;
+}
+
+.fp-ruler-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.000px;
+}
+
+.fp-ruler-label {
+  font-size: 10.000px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.fp-ruler-track {
+  position: relative;
+  height: 3.000px;
+  margin-top: 4.000px;
+  border-radius: 1.500px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.fp-ruler-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 1.500px;
+  background: linear-gradient(90deg, #d1553a, #ee5a2e);
+}
+
+.fp-ruler-knob {
+  position: absolute;
+  top: 50%;
+  width: 9.000px;
+  height: 9.000px;
+  margin-left: -4.500px;
+  border-radius: 50%;
+  background: #ee5a2e;
+  border: 1.500px solid rgba(255, 255, 255, 0.85);
+  transform: translateY(-50%);
+  box-sizing: border-box;
+}
+
+/* 状态二：性能监控 */
+.fp-perf {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.fp-hz {
+  font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.fp-net {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.fp-net-line {
+  font-size: 11.000px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;
+}
+.tabbar-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0 12.000px calc(8.000px + env(safe-area-inset-bottom));
+}
+
+/* 弹层打开时整体隐藏（含安全区内边距） */
+.tabbar-hide {
+  display: none;
+}
+
+.tabbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62.000px;
+  border-radius: 31.000px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6.000px 17.000px rgba(120, 140, 180, 0.22);
+  padding: 0 5.000px;
+}
+
+.tab-item {
+  flex: 1 1 0;
+  max-width: 110.000px;
+  height: 50.000px;
+  margin: 0 3.000px;
+  border-radius: 15.000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-on {
+  background: linear-gradient(180deg, #e8f1ff 0%, #dfeafd 100%);
+}
+
+.tab-icon {
+  width: 22.000px;
+  height: 22.000px;
+}
+
+.tab-text {
+  margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #2c3140;
+  white-space: nowrap;
+}
+
+.tab-on .tab-text {
+  color: #2f6fd0;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+<div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:24px;height:44px;"><div class="nav-row" style="padding-right:108px;"><span class="nav-title">悬浮时钟</span></div></div><div class="page-body"><div class="event-card card-normal"><div class="ribbon"><img class="ribbon-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIuNyAzYy45IDMuMS0yLjMgNC4yLTIuMyA2LjQgMCAxLjEuOCAyIDEuOCAyIDEuNSAwIDIuNC0xLjUgMi4xLTMuMiAyLjQgMS44IDMuOCA0LjEgMy44IDYuNSAwIDMuNC0yLjggNi4yLTYuMiA2LjJzLTYuMi0yLjgtNi4yLTYuMkM1LjcgMTAuMSAxMC4zIDggMTIuNyAzWiIgZmlsbD0iIzRhYThmMCIvPjwvc3ZnPg=="></div><div class="event-head"><div class="event-thumb"><img class="event-thumb-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj48cmVjdCB4PSIzLjYiIHk9IjUuMiIgd2lkdGg9IjE2LjgiIGhlaWdodD0iMTMuNiIgcng9IjIuOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxwYXRoIGQ9Ik0zLjYgOS44aDE2LjgiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxLjgiLz48cGF0aCBkPSJNNy40IDEzLjhoNiIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><span class="event-title">【淘宝】茅台（MOUTAI）飞天 53%vol 500ml 贵州茅台酒</span></div><div class="event-mid"><div class="price"><span class="price-sym">¥</span><span class="price-num mono">1499.00</span></div><span class="cd-label">倒计时</span></div><div class="event-foot"><span class="event-target">1天后 20:00:00</span><div class="digits"><div class="digit mono">23</div><span class="colon">:</span><div class="digit mono">53</div><span class="colon">:</span><div class="digit mono">37</div><div class="digit digit-last mono">5</div></div></div></div><div class="ring-wrap"><div class="ring" style="width:250.000px;height:250.000px;"><div class="ring-face"></div><div class="ring-face-inner"></div><div class="ring-face-line"></div><img class="ring-ticks" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cline x1='250' y1='8.43' x2='250' y2='23.68' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='275.25' y1='9.75' x2='274.33' y2='18.56' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='300.23' y1='13.71' x2='298.38' y2='22.37' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='324.65' y1='20.25' x2='321.91' y2='28.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='348.26' y1='29.31' x2='344.65' y2='37.4' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='370.79' y1='40.79' x2='363.16' y2='54' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='391.99' y1='54.56' x2='386.79' y2='61.73' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='411.64' y1='70.48' x2='405.72' y2='77.06' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='429.52' y1='88.36' x2='422.94' y2='94.28' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='445.44' y1='108.01' x2='438.27' y2='113.21' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='459.21' y1='129.21' x2='446' y2='136.84' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='470.69' y1='151.74' x2='462.6' y2='155.35' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='479.75' y1='175.35' x2='471.33' y2='178.09' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='486.29' y1='199.77' x2='477.63' y2='201.62' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='490.25' y1='224.75' x2='481.44' y2='225.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='491.57' y1='250' x2='476.32' y2='250' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='490.25' y1='275.25' x2='481.44' y2='274.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='486.29' y1='300.23' x2='477.63' y2='298.38' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='479.75' y1='324.65' x2='471.33' y2='321.91' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='470.69' y1='348.26' x2='462.6' y2='344.65' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='459.21' y1='370.79' x2='446' y2='363.16' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='445.44' y1='391.99' x2='438.27' y2='386.79' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='429.52' y1='411.64' x2='422.94' y2='405.72' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='411.64' y1='429.52' x2='405.72' y2='422.94' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='391.99' y1='445.44' x2='386.79' y2='438.27' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='370.79' y1='459.21' x2='363.16' y2='446' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='348.26' y1='470.69' x2='344.65' y2='462.6' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='324.65' y1='479.75' x2='321.91' y2='471.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='300.23' y1='486.29' x2='298.38' y2='477.63' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='275.25' y1='490.25' x2='274.33' y2='481.44' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='250' y1='491.57' x2='250' y2='476.32' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='224.75' y1='490.25' x2='225.67' y2='481.44' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='199.77' y1='486.29' x2='201.62' y2='477.63' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='175.35' y1='479.75' x2='178.09' y2='471.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='151.74' y1='470.69' x2='155.35' y2='462.6' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='129.21' y1='459.21' x2='136.84' y2='446' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='108.01' y1='445.44' x2='113.21' y2='438.27' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='88.36' y1='429.52' x2='94.28' y2='422.94' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='70.48' y1='411.64' x2='77.06' y2='405.72' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='54.56' y1='391.99' x2='61.73' y2='386.79' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='40.79' y1='370.79' x2='54' y2='363.16' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='29.31' y1='348.26' x2='37.4' y2='344.65' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='20.25' y1='324.65' x2='28.67' y2='321.91' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='13.71' y1='300.23' x2='22.37' y2='298.38' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='9.75' y1='275.25' x2='18.56' y2='274.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='8.43' y1='250' x2='23.68' y2='250' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='9.75' y1='224.75' x2='18.56' y2='225.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='13.71' y1='199.77' x2='22.37' y2='201.62' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='20.25' y1='175.35' x2='28.67' y2='178.09' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='29.31' y1='151.74' x2='37.4' y2='155.35' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='40.79' y1='129.21' x2='54' y2='136.84' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='54.56' y1='108.01' x2='61.73' y2='113.21' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='70.48' y1='88.36' x2='77.06' y2='94.28' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='88.36' y1='70.48' x2='94.28' y2='77.06' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='108.01' y1='54.56' x2='113.21' y2='61.73' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='129.21' y1='40.79' x2='136.84' y2='54' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='151.74' y1='29.31' x2='155.35' y2='37.4' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='175.35' y1='20.25' x2='178.09' y2='28.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='199.77' y1='13.71' x2='201.62' y2='22.37' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='224.75' y1='9.75' x2='225.67' y2='18.56' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='250' cy='21.22' r='5.41' fill='rgb(79,212,232)'/%3E%3Ccircle cx='478.78' cy='250' r='5.41' fill='rgb(139,124,224)'/%3E%3Ccircle cx='250' cy='478.78' r='5.41' fill='rgb(79,212,232)'/%3E%3Ccircle cx='21.22' cy='250' r='5.41' fill='rgb(242,162,184)'/%3E%3C/svg%3E"><img class="ring-arc" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cdefs%3E%3ClinearGradient id='g' gradientUnits='userSpaceOnUse' x1='4' y1='4' x2='422.2' y2='496'%3E%3Cstop offset='0' stop-color='rgb(198,205,246)'/%3E%3Cstop offset='0.5' stop-color='rgb(180,189,242)'/%3E%3Cstop offset='1' stop-color='rgb(163,175,240)'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M 250 37.95 A 212.05 212.05 0 0 1 399.94 399.94' fill='none' stroke='url(%23g)' stroke-width='6.4' stroke-linecap='round'/%3E%3C/svg%3E"><div class="ring-center"><div class="ring-badge"><img class="ring-badge-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU0IiBoZWlnaHQ9IjU0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEzLjEiIHI9IjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIvPjxwYXRoIGQ9Ik0xMiA5Ljl2My40bDIuMyAxLjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhmOTVjNiIgc3Ryb2tlLXdpZHRoPSIxLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik00LjMgNi4zIDYuNiA0TTE5LjcgNi4zIDE3LjQgNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><div class="ring-time mono">20:06:22.5</div><div class="ring-sub">北京时间</div></div></div></div><div class="quick-panel"><div class="quick-circle"><img class="quick-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTkuNiAxMmE3LjYgNy42IDAgMSAxLTIuNS01LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuNnY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTIgOC42djMuNmwyLjggMS43IiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="quick-texts"><span class="quick-title">时间源</span><span class="quick-sub">北京时间</span></div><img class="quick-chevron" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIj48cGF0aCBkPSJNOS44IDUuNiAxNS40IDEybC01LjYgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiNiN2JkYzkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+"></div><div class="collapse"><img class="collapse-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM4IiBoZWlnaHQ9IjM4Ij48cGF0aCBkPSJNNi4yIDE0LjQgMTIgOC44bDUuOCA1LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzdjODQ5NyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="primary-btn">
+      开启悬浮窗
+    </div></div><div class="float-pill" style="left:40px;top:150px;width:220px;height:118px;"><div class="fp-head"><div class="fp-head-left"><span class="fp-latency">40ms</span><div class="fp-click"><span class="fp-click-label">点击</span><div class="fp-click-dot fp-click-dot-off"></div></div></div><span class="fp-source">北京时间</span></div><div class="fp-main"><span class="fp-time mono">22:22:57.</span><span class="fp-tenth mono">6</span></div><div class="fp-bottom"><div class="fp-ruler-labels "><span class="fp-ruler-label">2.5</span><span class="fp-ruler-label">2.0</span><span class="fp-ruler-label">1.5</span><span class="fp-ruler-label">1.0</span><span class="fp-ruler-label">0.5</span></div><div class="fp-ruler-track "><div class="fp-ruler-fill" style="width:52%"></div><div class="fp-ruler-knob" style="left:52%"></div></div><div class="fp-perf fp-hide"><span class="fp-hz">60Hz</span><div class="fp-net"><span class="fp-net-line">↑ 11 KB/s</span><span class="fp-net-line">↓ 0 KB/s</span></div></div></div></div></div><div class="tabbar-wrap "><div class="tabbar"><div class="tab-item tab-on" data-index="0"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="tab-text">时钟</span></div><div class="tab-item " data-index="1"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48cGF0aCBkPSJNOC40IDMuMiAxNy42IDEyLjRsLTQuNi42LTIuNCA0LjR6IiBmaWxsPSIjMmMzMTQwIi8+PHBhdGggZD0iTTE1LjQgMTUuMmMuOSAxLjEgMS40IDIuNCAxLjQgMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTguNCAxMy4yYzEuNiAxLjkgMi41IDQuMSAyLjUgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">点击</span></div><div class="tab-item " data-index="2"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">我的</span></div></div></div>
+<script>
+var RING_BODY = "\n  properties: {\n    source: { type: String, value: 'beijing' },\n    serverOffset: { type: Number, value: 0 },\n    badgeIcon: { type: String, value: '' },\n    label: { type: String, value: '' },\n    size: { type: Number, value: 500 }\n  },\n\n  data: {\n    timeText: '--:--:--.-',\n    subText: '北京时间',\n    ticksSvg: '',\n    arcSvg: ''\n  },\n\n  lifetimes: {\n    ready() {\n      this._alive = true\n      // 刻度与定位点是静态的，只算一次（比较贵）\n      if (!this.data.ticksSvg) this.setData({ ticksSvg: ringSvg.ticksSvg() })\n      this.start()\n    },\n    detached() {\n      this.stop()\n    }\n  },\n\n  methods: {\n    start() {\n      if (this._timer) return\n      this.paint()\n      // 50ms 一档：弧每步约 0.3°，肉眼看是连续的\n      this._timer = setInterval(() => this.paint(), 50)\n    },\n\n    stop() {\n      if (this._timer) {\n        clearInterval(this._timer)\n        this._timer = null\n      }\n    },\n\n    pause() {\n      this.stop()\n    },\n\n    resume() {\n      this._alive = true\n      this.start()\n    },\n\n    paint() {\n      if (!this._alive) return\n      const p = time.parts(Date.now(), this.data.source, this.data.serverOffset)\n      const progress = (p.seconds + p.ms / 1000) / 60\n      const text = time.formatClock(p)\n      const sub = this.data.label || time.sourceLabel(this.data.source)\n      const patch = {}\n\n      // 进度弧：字符串没变就不 setData（省一半渲染）\n      const arc = ringSvg.arcSvg(progress)\n      if (arc !== this._lastArc) {\n        this._lastArc = arc\n        patch.arcSvg = arc\n      }\n      if (text !== this._lastText || sub !== this._lastSub) {\n        this._lastText = text\n        this._lastSub = sub\n        patch.timeText = text\n        patch.subText = sub\n        this.triggerEvent('tick', { text: text, sub: sub })\n      }\n      if (Object.keys(patch).length) this.setData(patch)\n    }\n  }\n";
+var TIME_SRC = "// 时间计算：北京时间 / 本机时间 / 服务器时间（带漂移校准）\nconst BJ_OFFSET = 8 * 60 * 60 * 1000\nconst DAY = 24 * 60 * 60 * 1000\n\nconst SOURCE_LABEL = {\n  beijing: '北京时间',\n  device: '本机时间',\n  server: '服务器时间'\n}\n\nfunction pad(n, len) {\n  let s = String(Math.floor(Math.abs(n)))\n  const width = len || 2\n  while (s.length < width) s = '0' + s\n  return s\n}\n\n// 返回目标时区的“挂钟”字段\nfunction parts(epochMs, source, serverOffset) {\n  const offset = serverOffset || 0\n  let d\n  let utc = false\n  if (source === 'beijing') {\n    d = new Date(epochMs + BJ_OFFSET)\n    utc = true\n  } else if (source === 'server') {\n    d = new Date(epochMs + offset)\n  } else {\n    d = new Date(epochMs)\n  }\n  const g = (name) => (utc ? d['getUTC' + name]() : d['get' + name]())\n  return {\n    year: g('FullYear'),\n    month: g('Month') + 1,\n    date: g('Date'),\n    day: g('Day'),\n    hours: g('Hours'),\n    minutes: g('Minutes'),\n    seconds: g('Seconds'),\n    ms: g('Milliseconds')\n  }\n}\n\nfunction sourceLabel(source) {\n  return SOURCE_LABEL[source] || SOURCE_LABEL.beijing\n}\n\n// 走时文本：HH:MM:SS.d（十分位）\nfunction formatClock(p) {\n  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds) + '.' + Math.floor(p.ms / 100)\n}\n\n// 倒计时拆分（用于卡片数字块）\nfunction countdownParts(targetTs, epochMs) {\n  const remain = Math.max(0, (targetTs || epochMs) - epochMs)\n  return {\n    h: pad(Math.floor(remain / 3600000) % 100),\n    m: pad(Math.floor(remain / 60000) % 60),\n    s: pad(Math.floor(remain / 1000) % 60),\n    t: String(Math.floor((remain % 1000) / 100)),\n    remain\n  }\n}\n\nfunction countdownText(targetTs, epochMs) {\n  const c = countdownParts(targetTs, epochMs)\n  return c.h + ':' + c.m + ':' + c.s\n}\n\n// 以北京时间为基准的当日某个时刻的时间戳\nfunction beijingEpochOf(h, m, s, epochMs) {\n  const p = parts(epochMs, 'beijing')\n  return Date.UTC(p.year, p.month - 1, p.date, h || 0, m || 0, s || 0, 0) - BJ_OFFSET\n}\n\n// 下一次北京时间 hh:mm:ss（当天已过则顺延一天）\nfunction nextBeijing(h, m, s, epochMs) {\n  const now = epochMs || Date.now()\n  let t = beijingEpochOf(h, m, s, now)\n  while (t <= now) t += DAY\n  return t\n}\n\n// 目标日期相对今天的天数描述\nfunction dayOffsetLabel(targetTs, epochMs) {\n  const a = parts(epochMs || Date.now(), 'beijing')\n  const b = parts(targetTs, 'beijing')\n  const da = Date.UTC(a.year, a.month - 1, a.date)\n  const db = Date.UTC(b.year, b.month - 1, b.date)\n  const diff = Math.round((db - da) / DAY)\n  if (diff <= 0) return '今天'\n  return diff + '天后'\n}\n\nfunction clockLabel(ts) {\n  const p = parts(ts, 'beijing')\n  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds)\n}\n\nfunction dateLabel(ts) {\n  const p = parts(ts, 'beijing')\n  return p.month + '月' + p.date + '日'\n}\n\nfunction fullLabel(ts) {\n  const p = parts(ts, 'beijing')\n  return p.year + '-' + pad(p.month) + '-' + pad(p.date) + ' ' + pad(p.hours) + ':' + pad(p.minutes)\n}\n\n// 解析 \"20:00:00\"\nfunction parseHMS(text) {\n  const arr = String(text || '20:00:00').split(':').map(function (v) { return parseInt(v, 10) || 0 })\n  return { h: arr[0] || 0, m: arr[1] || 0, s: arr[2] || 0 }\n}\n\nmodule.exports = {\n  BJ_OFFSET: BJ_OFFSET,\n  DAY: DAY,\n  pad: pad,\n  parts: parts,\n  sourceLabel: sourceLabel,\n  formatClock: formatClock,\n  countdownParts: countdownParts,\n  countdownText: countdownText,\n  beijingEpochOf: beijingEpochOf,\n  nextBeijing: nextBeijing,\n  dayOffsetLabel: dayOffsetLabel,\n  clockLabel: clockLabel,\n  dateLabel: dateLabel,\n  fullLabel: fullLabel,\n  parseHMS: parseHMS\n}";
+var time = (function () { var module = { exports: {} }; var exports = module.exports; // 时间计算：北京时间 / 本机时间 / 服务器时间（带漂移校准）
+const BJ_OFFSET = 8 * 60 * 60 * 1000
+const DAY = 24 * 60 * 60 * 1000
+
+const SOURCE_LABEL = {
+  beijing: '北京时间',
+  device: '本机时间',
+  server: '服务器时间'
+}
+
+function pad(n, len) {
+  let s = String(Math.floor(Math.abs(n)))
+  const width = len || 2
+  while (s.length < width) s = '0' + s
+  return s
+}
+
+// 返回目标时区的“挂钟”字段
+function parts(epochMs, source, serverOffset) {
+  const offset = serverOffset || 0
+  let d
+  let utc = false
+  if (source === 'beijing') {
+    d = new Date(epochMs + BJ_OFFSET)
+    utc = true
+  } else if (source === 'server') {
+    d = new Date(epochMs + offset)
+  } else {
+    d = new Date(epochMs)
+  }
+  const g = (name) => (utc ? d['getUTC' + name]() : d['get' + name]())
+  return {
+    year: g('FullYear'),
+    month: g('Month') + 1,
+    date: g('Date'),
+    day: g('Day'),
+    hours: g('Hours'),
+    minutes: g('Minutes'),
+    seconds: g('Seconds'),
+    ms: g('Milliseconds')
+  }
+}
+
+function sourceLabel(source) {
+  return SOURCE_LABEL[source] || SOURCE_LABEL.beijing
+}
+
+// 走时文本：HH:MM:SS.d（十分位）
+function formatClock(p) {
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds) + '.' + Math.floor(p.ms / 100)
+}
+
+// 倒计时拆分（用于卡片数字块）
+function countdownParts(targetTs, epochMs) {
+  const remain = Math.max(0, (targetTs || epochMs) - epochMs)
+  return {
+    h: pad(Math.floor(remain / 3600000) % 100),
+    m: pad(Math.floor(remain / 60000) % 60),
+    s: pad(Math.floor(remain / 1000) % 60),
+    t: String(Math.floor((remain % 1000) / 100)),
+    remain
+  }
+}
+
+function countdownText(targetTs, epochMs) {
+  const c = countdownParts(targetTs, epochMs)
+  return c.h + ':' + c.m + ':' + c.s
+}
+
+// 以北京时间为基准的当日某个时刻的时间戳
+function beijingEpochOf(h, m, s, epochMs) {
+  const p = parts(epochMs, 'beijing')
+  return Date.UTC(p.year, p.month - 1, p.date, h || 0, m || 0, s || 0, 0) - BJ_OFFSET
+}
+
+// 下一次北京时间 hh:mm:ss（当天已过则顺延一天）
+function nextBeijing(h, m, s, epochMs) {
+  const now = epochMs || Date.now()
+  let t = beijingEpochOf(h, m, s, now)
+  while (t <= now) t += DAY
+  return t
+}
+
+// 目标日期相对今天的天数描述
+function dayOffsetLabel(targetTs, epochMs) {
+  const a = parts(epochMs || Date.now(), 'beijing')
+  const b = parts(targetTs, 'beijing')
+  const da = Date.UTC(a.year, a.month - 1, a.date)
+  const db = Date.UTC(b.year, b.month - 1, b.date)
+  const diff = Math.round((db - da) / DAY)
+  if (diff <= 0) return '今天'
+  return diff + '天后'
+}
+
+function clockLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds)
+}
+
+function dateLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.month + '月' + p.date + '日'
+}
+
+function fullLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.year + '-' + pad(p.month) + '-' + pad(p.date) + ' ' + pad(p.hours) + ':' + pad(p.minutes)
+}
+
+// 解析 "20:00:00"
+function parseHMS(text) {
+  const arr = String(text || '20:00:00').split(':').map(function (v) { return parseInt(v, 10) || 0 })
+  return { h: arr[0] || 0, m: arr[1] || 0, s: arr[2] || 0 }
+}
+
+module.exports = {
+  BJ_OFFSET: BJ_OFFSET,
+  DAY: DAY,
+  pad: pad,
+  parts: parts,
+  sourceLabel: sourceLabel,
+  formatClock: formatClock,
+  countdownParts: countdownParts,
+  countdownText: countdownText,
+  beijingEpochOf: beijingEpochOf,
+  nextBeijing: nextBeijing,
+  dayOffsetLabel: dayOffsetLabel,
+  clockLabel: clockLabel,
+  dateLabel: dateLabel,
+  fullLabel: fullLabel,
+  parseHMS: parseHMS
+}; return module.exports; })();
+var FIXED = 1789387582500;
+function drawRing() {
+  var canvas = document.getElementById("ring");
+  if (!canvas) return;
+  var dpr = 2, w = 250, h = 250;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  canvas.style.width = w + "px"; canvas.style.height = h + "px";
+  var ctx = canvas.getContext("2d");
+  var self = {
+    ctx: ctx, dpr: dpr, w: w, h: h,
+    data: { source: "beijing", serverOffset: 0 },
+    setData: function (o) {
+      if (o.timeText !== undefined) { var e = document.querySelector(".ring-time"); if (e) e.textContent = o.timeText; }
+      if (o.subText !== undefined) { var s = document.querySelector(".ring-sub"); if (s) s.textContent = o.subText; }
+    },
+    triggerEvent: function () {}
+  };
+  var fn = new Function("time", "return function () {" + RING_BODY + "}")(time);
+  var real = Date.now;
+  Date.now = function () { return FIXED; };
+  fn.call(self);
+  Date.now = real;
+}
+drawRing();
+</script>
+</body>
+</html>

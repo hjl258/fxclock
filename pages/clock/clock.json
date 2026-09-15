@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "ring-clock": "/components/ring-clock/index",
+    "float-clock": "/components/float-clock/index"
+  },
+  "navigationStyle": "custom",
+  "backgroundColor": "#eef1f7"
+}

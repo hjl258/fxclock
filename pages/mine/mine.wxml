@@ -1,0 +1,68 @@
+<view class="page">
+  <view class="bg"></view>
+  <view class="bg-band"></view>
+
+  <view class="nav" style="padding-top:{{statusBarHeight}}px;height:{{navBarHeight}}px;">
+    <view class="nav-row" style="padding-right:{{capsulePad}}px;">
+      <text class="nav-title">我的</text>
+    </view>
+  </view>
+
+  <view class="page-body">
+    <view class="profile">
+      <view class="avatar">
+        <image class="avatar-icon" src="{{icons.user}}" mode="aspectFit"></image>
+      </view>
+      <view class="profile-info">
+        <text class="profile-name">微信用户</text>
+        <text class="profile-sub">毫秒级走时 · 当前时间源 {{sourceLabel}}</text>
+      </view>
+    </view>
+
+    <view class="group">
+      <view class="row-item">
+        <view class="row-left">
+          <image class="row-icon" src="{{icons.vibrate}}" mode="aspectFit"></image>
+          <text class="row-label">抢购震动提醒</text>
+        </view>
+        <switch class="switch-s" checked="{{settings.haptic}}" color="#3b7ff0" bindchange="onHaptic" />
+      </view>
+            <view class="row-item">
+        <view class="row-left">
+          <image class="row-icon" src="{{icons.shield}}" mode="aspectFit"></image>
+          <text class="row-label">开启后屏幕常亮</text>
+        </view>
+        <switch class="switch-s" checked="{{settings.keepScreenOn}}" color="#3b7ff0" bindchange="onKeep" />
+      </view>
+    </view>
+
+    <view class="group">
+      <view class="row-item" bindtap="about">
+        <view class="row-left">
+          <image class="row-icon" src="{{icons.shield}}" mode="aspectFit"></image>
+          <text class="row-label">关于悬浮时钟</text>
+        </view>
+        <view class="row-right">
+          <text class="row-value">v{{version}}</text>
+          <image class="row-chevron" src="{{icons.chevron}}" mode="aspectFit"></image>
+        </view>
+      </view>
+      <view class="row-item" bindtap="resetAll">
+        <view class="row-left">
+          <image class="row-icon" src="{{icons.cal}}" mode="aspectFit"></image>
+          <text class="row-label">清除本地数据</text>
+        </view>
+        <image class="row-chevron" src="{{icons.chevron}}" mode="aspectFit"></image>
+      </view>
+    </view>
+
+    <view class="footer">毫秒级走时 · 北京时间授时 · 抢购倒计时</view>
+  </view>
+
+  <float-clock
+    show="{{floatOn}}"
+    source="{{floatSource}}"
+    server-offset="{{floatOffset}}"
+    label="{{floatLabel}}"
+  />
+</view>

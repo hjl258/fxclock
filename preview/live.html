@@ -1,0 +1,3515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>悬浮时钟 · 可操作预览</title>
+<style>
+html,body{margin:0;padding:0}
+body{min-height:100vh;box-sizing:border-box;padding:24px 20px 40px;background:#0f1320;color:#e8ecf6;
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  background-image:radial-gradient(60% 40% at 86% 4%,rgba(118,226,212,.13),rgba(118,226,212,0) 70%),
+    radial-gradient(50% 34% at 3% 24%,rgba(246,192,212,.13),rgba(246,192,212,0) 70%)}
+#live-wrap{max-width:600px;margin:0 auto}
+#live-title{font-size:15px;font-weight:600;margin:0 0 4px}
+#live-hint{font-size:12.5px;line-height:1.7;color:#8b93a7;margin:0 0 16px}
+#live-note{font-size:12.5px;line-height:1.8;color:#8b93a7;margin:16px 0 0}
+.dev{position:relative;width:375px;height:812px;margin:0 auto;border-radius:46px;background:#eef1f7;transform:translateZ(0);
+  overflow:hidden;box-shadow:0 0 0 9px #171c28,0 0 0 10px #333c50,0 30px 70px rgba(6,9,16,.55)}
+.dev-screen{position:absolute;left:0;top:0;width:375px;height:812px;overflow:hidden}
+.dev-status{position:absolute;left:0;top:0;width:375px;height:44px;z-index:60;display:flex;align-items:center;
+  justify-content:space-between;padding:0 22px;font-size:14.5px;font-weight:600;color:#16181f;pointer-events:none}
+.dev-status .st-l{display:flex;align-items:center;gap:5px}
+.dev-status .st-r{display:flex;align-items:center;gap:6px}
+.dev-island{position:absolute;left:50%;top:11px;transform:translateX(-50%);width:104px;height:27px;border-radius:15px;
+  background:#05070d;z-index:61;display:flex;align-items:center;justify-content:flex-end;padding:0 9px;gap:6px;pointer-events:none}
+.dev-island i{display:block;width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a4a6b,#0a0d14)}
+.dev-island b{display:block;width:5px;height:5px;border-radius:50%;background:#2b3550}
+.dev-capsule{position:absolute;right:10px;top:50px;width:88px;height:32px;border-radius:16px;
+  background:rgba(22,26,36,.05);border:1px solid rgba(22,26,36,.10);z-index:61;display:flex;align-items:center;justify-content:center;gap:8px}
+.dev-capsule i{display:block;width:5px;height:5px;border-radius:50%;background:rgba(22,26,36,.45)}
+.dev-capsule b{display:block;width:13px;height:13px;border-radius:50%;border:1.6px solid rgba(22,26,36,.45)}
+.dev-home{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);width:134px;height:5px;border-radius:3px;
+  background:rgba(20,24,32,.32);z-index:62;pointer-events:none}
+.live-screen{position:absolute;left:0;top:0;width:375px;height:812px;overflow-x:hidden;overflow-y:auto;display:none}
+.live-screen.on{display:block}
+.live-screen.sheet-open{overflow:hidden}
+.live-screen::-webkit-scrollbar{width:0}
+.dev-vbar{position:absolute;right:3px;top:50%;transform:translateY(-50%);height:62%;width:7px;z-index:55;opacity:0;transition:opacity .18s;pointer-events:none}
+.dev-vbar.on{opacity:1}
+.dev-vbar-track{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:4px;background:rgba(20,24,32,.10)}
+.dev-vbar-thumb{position:absolute;left:0;width:100%;border-radius:4px;background:rgba(92,106,136,.88);box-shadow:0 0 0 1px rgba(255,255,255,.35) inset;pointer-events:auto;cursor:grab;transition:background .15s}
+.dev-vbar-thumb:hover{background:rgba(76,92,124,.95)}
+.dev-vbar-thumb:active{cursor:grabbing;background:rgba(60,76,110,1)}
+.live-hidden,.fp-hide{display:none !important}
+input.switch-el{-webkit-appearance:none;appearance:none;width:42px;height:24px;border-radius:12px;background:#e2e6ee;position:relative;
+  border:0;margin:0;cursor:pointer;flex:none;align-self:center}
+input.switch-el:checked{background:#3b7ff0}
+input.switch-el::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .18s}
+input.switch-el:checked::after{left:20px}
+.live-tap{cursor:pointer}
+#live-toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:90;padding:16px 22px;border-radius:12px;
+  background:rgba(0,0,0,.78);color:#fff;font-size:13.5px;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+#live-toast.on{opacity:1}
+#live-clock{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#live-clock .body{position: relative;
+  min-height: 812px;}
+#live-clock .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#live-clock .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#live-clock .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#live-clock .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#live-clock .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#live-clock .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#live-clock .nav-gap{flex: 1;}
+#live-clock .tap{opacity: 0.7;}
+#live-clock .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#live-clock .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-clock .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#live-clock .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#live-clock .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#live-clock .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#live-clock .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#live-clock .row-item:last-child{border-bottom: none;}
+#live-clock .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-clock .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#live-clock .switch-s{transform: scale(0.78);}
+#live-clock .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#live-clock .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#live-clock .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#live-clock .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#live-clock .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-clock .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#live-clock .sheet-group{margin-top: 13.000px;}
+#live-clock .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#live-clock .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#live-clock .radio-row:last-child{border-bottom: none;}
+#live-clock .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-clock .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#live-clock .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#live-clock .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-clock .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#live-clock .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#live-clock .event-card{position: relative;
+  margin: 11.000px 14.000px 0;
+  padding: 13.000px 13.000px 11.000px;
+  border-radius: 14.000px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #eef6fe 0%, #e8f0fd 58%, #eaf1fb 100%);
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.12);}
+#live-clock .ribbon{position: absolute;
+  right: 0;
+  top: 0;
+  width: 33.000px;
+  height: 33.000px;
+  border-bottom-left-radius: 13.000px;
+  background: linear-gradient(180deg, #ddecfd 0%, #cbe0fc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-clock .ribbon-icon{width: 18.000px;
+  height: 18.000px;
+  margin-left: 4.000px;
+  margin-top: -3.000px;}
+#live-clock .event-head{display: flex;
+  align-items: center;
+  padding-right: 30.000px;}
+#live-clock .event-thumb{flex: none;
+  width: 23.000px;
+  height: 23.000px;
+  border-radius: 6.500px;
+  margin-right: 8.000px;
+  background: linear-gradient(160deg, #5aa9f6 0%, #2f78ee 100%);
+  box-shadow: 0 3.000px 7.000px rgba(47, 120, 238, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-clock .event-thumb-icon{width: 15.000px;
+  height: 15.000px;}
+#live-clock .event-title{flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;}
+#live-clock .event-mid{display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 9.000px;}
+#live-clock .price{display: flex;
+  align-items: baseline;
+  color: #ff6a00;}
+#live-clock .price-sym{font-size: 13.000px;
+  font-weight: 600;
+  margin-right: 2.000px;}
+#live-clock .price-num{font-size: 21.000px;
+  font-weight: 700;
+  letter-spacing: 0.500px;}
+#live-clock .cd-label{font-size: 12.000px;
+  color: #8b93a7;}
+#live-clock .event-foot{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8.000px;}
+#live-clock .event-target{font-size: 13.000px;
+  color: #8b93a7;}
+#live-clock .digits{display: flex;
+  align-items: center;}
+#live-clock .digit{min-width: 28.000px;
+  height: 28.000px;
+  padding: 0 3.000px;
+  border-radius: 6.000px;
+  background: #ffffff;
+  box-shadow: 0 2.000px 6.000px rgba(120, 150, 200, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16.000px;
+  font-weight: 700;
+  color: #1b1f2a;}
+#live-clock .colon{font-size: 13.000px;
+  color: #8b93a7;
+  margin: 0 4.000px;}
+#live-clock .digit-last{margin-left: 9.000px;
+  min-width: 24.000px;}
+#live-clock .card-live{background: linear-gradient(150deg, #fff1ec 0%, #ffe7e0 100%);
+  box-shadow: 0 6.000px 15.000px rgba(255, 120, 80, 0.18);}
+#live-clock .card-live .cd-label,#live-clock .card-live .price,#live-clock .card-live .price-num{color: #ff4d2d;}
+#live-clock .card-done{opacity: 0.72;}
+#live-clock .ring-wrap{display: flex;
+  justify-content: center;
+  margin-top: 28.000px;}
+#live-clock .quick-panel{display: flex;
+  align-items: center;
+  margin: 36.000px 14.000px 0;
+  padding: 11.000px 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);}
+#live-clock .quick-circle{flex: none;
+  width: 48.000px;
+  height: 48.000px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fdfeff 0%, #eef1f8 100%);
+  box-shadow: 0 4.000px 10.000px rgba(140, 160, 200, 0.16), inset 0 0 0 0.500px rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-clock .quick-icon{width: 22.000px;
+  height: 22.000px;}
+#live-clock .quick-texts{flex: 1;
+  margin-left: 11.000px;}
+#live-clock .quick-title{display: block;
+  font-size: 14.000px;
+  color: #2c3140;}
+#live-clock .quick-sub{display: block;
+  margin-top: 3.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#live-clock .quick-chevron{width: 15.000px;
+  height: 15.000px;}
+#live-clock .collapse{display: flex;
+  justify-content: center;
+  margin: 15.000px 0 3.000px;}
+#live-clock .collapse-icon{width: 18.000px;
+  height: 18.000px;
+  opacity: 0.6;}
+#live-clock .panel{margin: 6.000px 14.000px 0;
+  padding: 2.000px 13.000px;
+  border-radius: 12.000px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 5.000px 12.000px rgba(140, 160, 200, 0.12);}
+#live-clock .panel-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 50.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#live-clock .panel-row:last-child{border-bottom: none;}
+#live-clock .panel-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-clock .radio-left{display: flex;
+  flex-direction: column;}
+#live-clock .radio-desc{margin-top: 3.000px;
+  font-size: 11.000px;
+  color: #98a0b3;}
+#live-clock .sheet-btn{margin-top: 20.000px;}
+#live-clock .ring{position: relative;}
+#live-clock .ring-face{position: absolute;
+  left: 2.000px;
+  top: 2.000px;
+  right: 2.000px;
+  bottom: 2.000px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffffff 0%, #fbfcfe 45%, #e8ecf5 100%);
+  box-shadow: 0 7.000px 21.000px rgba(118, 136, 178, 0.30);}
+#live-clock .ring-face-inner{position: absolute;
+  left: 16.750px;
+  top: 16.750px;
+  right: 16.750px;
+  bottom: 16.750px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 28%, #ffffff 0%, #f7f8fc 72%, #eef1f8 100%);}
+#live-clock .ring-face-line{position: absolute;
+  left: 10.500px;
+  top: 10.500px;
+  right: 10.500px;
+  bottom: 10.500px;
+  border-radius: 50%;
+  border: 1.000px solid rgba(255, 255, 255, 0.85);}
+#live-clock .ring-ticks,#live-clock .ring-arc{position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: block;}
+#live-clock .ring-center{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#live-clock .ring-badge{width: 46.000px;
+  height: 46.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(180deg, #f2f4ff 0%, #e9ecfb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 13.000px;}
+#live-clock .ring-badge-icon{width: 25.000px;
+  height: 25.000px;}
+#live-clock .ring-time{font-size: 36.000px;
+  font-weight: 700;
+  color: #1b1f2a;
+  letter-spacing: 0.500px;
+  line-height: 1;}
+#live-clock .ring-sub{margin-top: 10.000px;
+  font-size: 13.000px;
+  color: #98a0b3;
+  letter-spacing: 0.500px;}
+#live-clock .tabbar-wrap{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0 12.000px calc(8.000px + env(safe-area-inset-bottom));}
+#live-clock .tabbar-hide{display: none;}
+#live-clock .tabbar{display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62.000px;
+  border-radius: 31.000px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6.000px 17.000px rgba(120, 140, 180, 0.22);
+  padding: 0 5.000px;}
+#live-clock .tab-item{flex: 1 1 0;
+  max-width: 110.000px;
+  height: 50.000px;
+  margin: 0 3.000px;
+  border-radius: 15.000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#live-clock .tab-on{background: linear-gradient(180deg, #e8f1ff 0%, #dfeafd 100%);}
+#live-clock .tab-icon{width: 22.000px;
+  height: 22.000px;}
+#live-clock .tab-text{margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #2c3140;
+  white-space: nowrap;}
+#live-clock .tab-on .tab-text{color: #2f6fd0;
+  font-weight: 600;}
+#live-mine{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#live-mine .body{position: relative;
+  min-height: 812px;}
+#live-mine .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#live-mine .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#live-mine .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#live-mine .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#live-mine .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#live-mine .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#live-mine .nav-gap{flex: 1;}
+#live-mine .tap{opacity: 0.7;}
+#live-mine .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#live-mine .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-mine .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#live-mine .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#live-mine .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#live-mine .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#live-mine .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#live-mine .row-item:last-child{border-bottom: none;}
+#live-mine .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-mine .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#live-mine .switch-s{transform: scale(0.78);}
+#live-mine .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#live-mine .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#live-mine .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#live-mine .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#live-mine .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-mine .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#live-mine .sheet-group{margin-top: 13.000px;}
+#live-mine .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#live-mine .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#live-mine .radio-row:last-child{border-bottom: none;}
+#live-mine .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-mine .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#live-mine .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#live-mine .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-mine .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#live-mine .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#live-mine .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-mine .profile{display: flex;
+  align-items: center;
+  margin: 11.000px 14.000px 0;
+  padding: 15.000px 13.000px;
+  border-radius: 15.000px;
+  background: linear-gradient(150deg, #eef6fe 0%, #e8f0fd 60%, #eaf1fb 100%);
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.14);}
+#live-mine .avatar{flex: none;
+  width: 52.000px;
+  height: 52.000px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #6cb0f8 0%, #3b7ff0 100%);
+  box-shadow: 0 5.000px 11.000px rgba(59, 127, 240, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-mine .avatar-icon{width: 28.000px;
+  height: 28.000px;}
+#live-mine .profile-info{flex: 1;
+  margin-left: 11.000px;}
+#live-mine .profile-name{display: block;
+  font-size: 16.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-mine .profile-sub{display: block;
+  margin-top: 5.000px;
+  font-size: 11.000px;
+  color: #8b93a7;}
+#live-mine .group{margin: 11.000px 14.000px 0;
+  padding: 2.000px 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.10);}
+#live-mine .row-left{display: flex;
+  align-items: center;}
+#live-mine .row-icon{width: 20.000px;
+  height: 20.000px;
+  margin-right: 8.000px;}
+#live-mine .row-right{display: flex;
+  align-items: center;}
+#live-mine .row-chevron{width: 13.000px;
+  height: 13.000px;
+  margin-left: 4.000px;}
+#live-mine .footer{margin: 20.000px 0 0;
+  text-align: center;
+  font-size: 11.000px;
+  color: #a8afbd;}
+#live-mine .page-body{padding-bottom: 120.000px;}
+#live-mine .tabbar-wrap{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0 12.000px calc(8.000px + env(safe-area-inset-bottom));}
+#live-mine .tabbar-hide{display: none;}
+#live-mine .tabbar{display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62.000px;
+  border-radius: 31.000px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6.000px 17.000px rgba(120, 140, 180, 0.22);
+  padding: 0 5.000px;}
+#live-mine .tab-item{flex: 1 1 0;
+  max-width: 110.000px;
+  height: 50.000px;
+  margin: 0 3.000px;
+  border-radius: 15.000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#live-mine .tab-on{background: linear-gradient(180deg, #e8f1ff 0%, #dfeafd 100%);}
+#live-mine .tab-icon{width: 22.000px;
+  height: 22.000px;}
+#live-mine .tab-text{margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #2c3140;
+  white-space: nowrap;}
+#live-mine .tab-on .tab-text{color: #2f6fd0;
+  font-weight: 600;}
+#live-events{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#live-events .body{position: relative;
+  min-height: 812px;}
+#live-events .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#live-events .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#live-events .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#live-events .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#live-events .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#live-events .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#live-events .nav-gap{flex: 1;}
+#live-events .tap{opacity: 0.7;}
+#live-events .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#live-events .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-events .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#live-events .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#live-events .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#live-events .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#live-events .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#live-events .row-item:last-child{border-bottom: none;}
+#live-events .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-events .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#live-events .switch-s{transform: scale(0.78);}
+#live-events .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#live-events .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#live-events .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#live-events .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#live-events .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-events .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#live-events .sheet-group{margin-top: 13.000px;}
+#live-events .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#live-events .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#live-events .radio-row:last-child{border-bottom: none;}
+#live-events .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-events .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#live-events .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#live-events .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-events .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#live-events .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#live-events .nav-title{font-size: 20.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-events .back-btn{width: 36.000px;
+  height: 36.000px;
+  border-radius: 50%;
+  margin-right: 6.000px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 3.000px 8.000px rgba(140, 160, 200, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-events .back-icon{width: 20.000px;
+  height: 20.000px;}
+#live-events .add-btn{height: 32.000px;
+  padding: 0 12.000px;
+  border-radius: 16.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 100%);
+  box-shadow: 0 4.000px 10.000px rgba(59, 127, 240, 0.28);
+  display: flex;
+  align-items: center;}
+#live-events .add-text{font-size: 13.000px;
+  color: #ffffff;
+  font-weight: 600;}
+#live-events .hint{margin: 11.000px 16.000px 0;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#live-events .ev-card{margin: 9.000px 14.000px 0;
+  padding: 13.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);}
+#live-events .ev-active{background: linear-gradient(150deg, #eef6fe 0%, #e6eefd 100%);
+  box-shadow: 0 6.000px 14.000px rgba(90, 150, 240, 0.18);}
+#live-events .ev-top{display: flex;
+  align-items: center;}
+#live-events .ev-tag{flex: none;
+  height: 18.000px;
+  line-height: 18.000px;
+  padding: 0 7.000px;
+  margin-right: 7.000px;
+  border-radius: 5.000px;
+  font-size: 10.000px;
+  color: #2f6fd0;
+  background: rgba(90, 150, 240, 0.12);}
+#live-events .ev-title{flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;}
+#live-events .ev-mid{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8.000px;}
+#live-events .ev-price{font-size: 18.000px;
+  font-weight: 700;
+  color: #ff6a00;}
+#live-events .ev-badge{font-size: 11.000px;
+  color: #2f6fd0;
+  padding: 2.000px 7.000px;
+  border-radius: 10.000px;
+  background: rgba(90, 150, 240, 0.14);}
+#live-events .ev-foot{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 7.000px;}
+#live-events .ev-target{font-size: 12.000px;
+  color: #8b93a7;}
+#live-events .ev-digits{display: flex;
+  align-items: center;}
+#live-events .ev-digit{min-width: 22.000px;
+  text-align: center;
+  font-size: 14.000px;
+  font-weight: 700;
+  color: #1b1f2a;}
+#live-events .ev-digit-last{margin-left: 5.000px;
+  color: #2f6fd0;}
+#live-events .ev-colon{margin: 0 2.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#live-events .ev-actions{display: flex;
+  align-items: center;
+  margin-top: 10.000px;
+  padding-top: 9.000px;
+  border-top: 0.500px solid rgba(150, 165, 200, 0.16);}
+#live-events .ev-action{flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28.000px;}
+#live-events .ev-action-icon{width: 15.000px;
+  height: 15.000px;
+  margin-right: 4.000px;}
+#live-events .ev-action-text{font-size: 12.000px;
+  color: #5a6478;}
+#live-events .form-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#live-events .form-label{flex: none;
+  width: 84.000px;
+  font-size: 13.000px;
+  color: #5a6478;}
+#live-events .form-input{flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  text-align: right;}
+#live-events .ph{color: #b7bdc9;}
+#live-events .form-picker{font-size: 14.000px;
+  color: #2f6fd0;
+  font-weight: 600;}
+#live-events .tag-list{display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;}
+#live-events .tag{padding: 4.000px 10.000px;
+  margin: 3.000px 0 3.000px 7.000px;
+  border-radius: 11.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  background: #f0f2f7;}
+#live-events .tag-on{color: #2f6fd0;
+  background: rgba(90, 150, 240, 0.16);
+  font-weight: 600;}
+#live-events .sheet-btn{margin-top: 20.000px;}
+#live-events .page-body{padding-bottom: 40.000px;}
+#live-clicker{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#live-clicker .body{position: relative;
+  min-height: 812px;}
+#live-clicker .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#live-clicker .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#live-clicker .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#live-clicker .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#live-clicker .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#live-clicker .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#live-clicker .nav-gap{flex: 1;}
+#live-clicker .tap{opacity: 0.7;}
+#live-clicker .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#live-clicker .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-clicker .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#live-clicker .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#live-clicker .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#live-clicker .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#live-clicker .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#live-clicker .row-item:last-child{border-bottom: none;}
+#live-clicker .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-clicker .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#live-clicker .switch-s{transform: scale(0.78);}
+#live-clicker .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#live-clicker .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#live-clicker .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#live-clicker .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#live-clicker .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-clicker .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#live-clicker .sheet-group{margin-top: 13.000px;}
+#live-clicker .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#live-clicker .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#live-clicker .radio-row:last-child{border-bottom: none;}
+#live-clicker .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-clicker .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#live-clicker .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#live-clicker .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-clicker .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#live-clicker .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#live-clicker .nav-title{font-size: 20.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-clicker .add-btn{height: 32.000px;
+  padding: 0 12.000px;
+  border-radius: 16.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 100%);
+  box-shadow: 0 4.000px 10.000px rgba(59, 127, 240, 0.28);
+  display: flex;
+  align-items: center;}
+#live-clicker .add-sym{font-size: 16.000px;
+  line-height: 1;
+  color: #ffffff;
+  margin-right: 3.000px;}
+#live-clicker .add-text{font-size: 13.000px;
+  font-weight: 600;
+  color: #ffffff;}
+#live-clicker .float-bar{margin: 9.000px 14.000px 0;
+  padding: 10.000px 12.000px;
+  border-radius: 11.000px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 5.000px 11.000px rgba(120, 150, 200, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;}
+#live-clicker .float-bar-left{display: flex;
+  align-items: center;
+  flex: 1;}
+#live-clicker .float-dot{flex: none;
+  width: 8.000px;
+  height: 8.000px;
+  border-radius: 50%;
+  margin-right: 7.000px;
+  background: #c2c8d4;}
+#live-clicker .float-bar-on{background: linear-gradient(135deg, #eaf7ee 0%, #dff1e5 100%);}
+#live-clicker .float-bar-on .float-dot{background: #37b24d;
+  box-shadow: 0 0 6.000px rgba(55, 178, 77, 0.7);}
+#live-clicker .float-bar-text{font-size: 13.000px;
+  color: #5a6478;}
+#live-clicker .float-bar-on .float-bar-text{color: #2b7a3f;
+  font-weight: 600;}
+#live-clicker .card-muted .task-time-main,#live-clicker .card-muted .task-sub-text,#live-clicker .card-muted .task-place{opacity: 0.42;}
+#live-clicker .card-muted .task-time-ms{opacity: 0.5;}
+#live-clicker .task-row{position: relative;
+  margin: 10.000px 14.000px 0;
+  border-radius: 10.000px;
+  overflow: hidden;}
+#live-clicker .task-delete{position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 84.000px;
+  background: linear-gradient(135deg, #ef5b45 0%, #e34d3b 100%);
+  color: #ffffff;
+  font-size: 15.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-clicker .task-card{position: relative;
+  z-index: 2;
+  
+  padding: 14.000px 71.000px 14.000px 13.000px;
+  border-radius: 10.000px;
+  background: #ffffff;
+  box-shadow: 0 5.000px 12.000px rgba(120, 150, 200, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.22s ease;}
+#live-clicker .task-open{transform: translateX(-84.000px);}
+#live-clicker .task-left{flex: 1;}
+#live-clicker .task-time{display: flex;
+  align-items: baseline;}
+#live-clicker .task-time-text{flex: none;
+  width: 160.000px;
+  display: flex;
+  align-items: baseline;}
+#live-clicker .task-time-main{font-size: 23.000px;
+  font-weight: 600;
+  color: #1b1f2a;
+  letter-spacing: 0.500px;}
+#live-clicker .task-time-ms{font-size: 15.000px;
+  font-weight: 600;
+  color: #37b24d;
+  letter-spacing: 0.500px;}
+#live-clicker .task-place{flex: none;
+  width: 90.000px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+  font-size: 16.000px;
+  color: #6f7a91;
+  letter-spacing: 0.250px;}
+#live-clicker .task-sub{margin-top: 5.000px;
+  display: flex;
+  align-items: baseline;}
+#live-clicker .task-sub-text{flex: none;
+  width: 160.000px;
+  display: flex;
+  align-items: baseline;}
+#live-clicker .task-name{font-size: 13.000px;
+  color: #37b24d;}
+#live-clicker .task-repeat{margin-left: 7.000px;
+  font-size: 13.000px;
+  color: #8b93a7;}
+#live-clicker .cyl-switch{position: relative;
+  flex: none;
+  width: 48.000px;
+  height: 27.000px;
+  border-radius: 13.500px;
+  background: linear-gradient(180deg, #d7dde8 0%, #c9d2e0 100%);
+  box-shadow: inset 0 1.500px 3.500px rgba(60, 80, 120, 0.24), inset 0 -0.500px 0 rgba(255, 255, 255, 0.55);
+  transition: background 0.2s ease, box-shadow 0.2s ease;}
+#live-clicker .cyl-knob{position: absolute;
+  top: 2.000px;
+  left: 2.000px;
+  width: 23.000px;
+  height: 23.000px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffffff 0%, #eef1f7 100%);
+  box-shadow: 0 2.000px 5.000px rgba(30, 45, 80, 0.30), inset 0 -1.000px 2.000px rgba(40, 60, 100, 0.08);
+  transition: transform 0.2s ease;}
+#live-clicker .cyl-on{background: linear-gradient(180deg, #52cf6f 0%, #37b24d 100%);
+  box-shadow: inset 0 1.500px 3.500px rgba(20, 90, 40, 0.28), inset 0 -0.500px 0 rgba(255, 255, 255, 0.28);}
+#live-clicker .cyl-on .cyl-knob{transform: translateX(21.000px);}
+#live-clicker .task-right{flex: none;
+  margin-left: 10.000px;}
+#live-clicker .empty{margin: 40.000px 14.000px 0;
+  padding: 40.000px 0;
+  border-radius: 12.000px;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.000px dashed rgba(140, 160, 200, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;}
+#live-clicker .empty-title{font-size: 15.000px;
+  color: #5a6478;}
+#live-clicker .empty-sub{margin-top: 5.000px;
+  font-size: 12.000px;
+  color: #98a0b3;}
+#live-clicker .time-preview{margin: 13.000px 0 4.000px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;}
+#live-clicker .time-main{font-size: 32.000px;
+  font-weight: 600;
+  color: #1b1f2a;
+  letter-spacing: 0.500px;}
+#live-clicker .time-ms{font-size: 22.000px;
+  font-weight: 600;
+  color: #37b24d;
+  letter-spacing: 0.500px;}
+#live-clicker .stepper-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#live-clicker .stepper-label{font-size: 13.000px;
+  color: #5a6478;}
+#live-clicker .stepper{display: flex;
+  align-items: center;
+  height: 30.000px;
+  border-radius: 15.000px;
+  background: #eef1f8;}
+#live-clicker .step-btn{width: 42.000px;
+  height: 30.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17.000px;
+  color: #2c3140;}
+#live-clicker .step-value{min-width: 44.000px;
+  text-align: center;
+  font-size: 15.000px;
+  font-weight: 600;
+  color: #1b1f2a;}
+#live-clicker .form-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#live-clicker .form-label{flex: none;
+  width: 80.000px;
+  font-size: 13.000px;
+  color: #5a6478;}
+#live-clicker .form-input{flex: 1;
+  font-size: 14.000px;
+  color: #1b1f2a;
+  text-align: right;}
+#live-clicker .ph{color: #b7bdc9;}
+#live-clicker .place-value{display: flex;
+  align-items: center;}
+#live-clicker .place-text{font-size: 14.000px;
+  color: #b0b7c4;}
+#live-clicker .place-tag{margin-left: 6.000px;
+  padding: 2.000px 7.000px;
+  border-radius: 9.000px;
+  font-size: 10.000px;
+  color: #8b93a7;
+  background: #f0f2f7;}
+#live-clicker .coord-wrap{margin-top: 10.000px;}
+#live-clicker .coord-head{display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#live-clicker .coord-title{font-size: 13.000px;
+  color: #5a6478;}
+#live-clicker .coord-hint{font-size: 11.000px;
+  color: #98a0b3;}
+#live-clicker .coord-panel{position: relative;
+  height: 160.000px;
+  border-radius: 10.000px;
+  background-color: #f7f9fc;
+  background-image: linear-gradient(to right, rgba(120, 150, 200, 0.18) 0.500px, transparent 0.500px),
+    linear-gradient(to bottom, rgba(120, 150, 200, 0.18) 0.500px, transparent 0.500px);
+  background-size: 10% 10%;
+  border: 0.500px solid rgba(140, 160, 200, 0.3);
+  overflow: hidden;}
+#live-clicker .coord-axis{position: absolute;
+  background: rgba(59, 127, 240, 0.25);}
+#live-clicker .coord-axis-x{left: 0;
+  right: 0;
+  top: 50%;
+  height: 0.500px;}
+#live-clicker .coord-axis-y{top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 0.500px;}
+#live-clicker .coord-marker{position: absolute;
+  width: 0;
+  height: 0;}
+#live-clicker .coord-marker-dot{position: absolute;
+  left: -6.000px;
+  top: -6.000px;
+  width: 12.000px;
+  height: 12.000px;
+  border-radius: 50%;
+  background: #e34d3b;
+  border: 2.000px solid #ffffff;
+  box-shadow: 0 2.000px 6.000px rgba(227, 77, 59, 0.45);}
+#live-clicker .coord-corner{position: absolute;
+  font-size: 10.000px;
+  color: #a8b3c6;}
+#live-clicker .coord-tl{left: 5.000px;
+  top: 4.000px;}
+#live-clicker .coord-br{right: 5.000px;
+  bottom: 4.000px;}
+#live-clicker .pick-btn{margin-top: 8.000px;
+  height: 40.000px;
+  border-radius: 10.000px;
+  background: #eef2fa;
+  color: #2f6fd0;
+  font-size: 14.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-clicker .place-on{color: #2f6fd0;
+  font-weight: 600;}
+#live-clicker .pick-mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 320;
+  background: rgba(18, 24, 38, 0.42);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#live-clicker .pick-tip{font-size: 16.000px;
+  color: #ffffff;
+  font-weight: 600;}
+#live-clicker .pick-sub{margin-top: 6.000px;
+  font-size: 12.000px;
+  color: rgba(255, 255, 255, 0.7);}
+#live-clicker .pick-cancel{margin-top: 20.000px;
+  padding: 8.000px 28.000px;
+  border-radius: 20.000px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1b1f2a;
+  font-size: 14.000px;}
+#live-clicker .sheet-actions{display: flex;
+  align-items: center;
+  margin-top: 18.000px;}
+#live-clicker .danger-btn{flex: none;
+  height: 48.000px;
+  padding: 0 20.000px;
+  margin-right: 10.000px;
+  border-radius: 12.000px;
+  background: #fdecea;
+  color: #e34d3b;
+  font-size: 15.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-clicker .sheet-btn{flex: 1;
+  margin: 0;
+  height: 48.000px;}
+#live-clicker .page-body{padding-bottom: 120.000px;}
+#live-clicker .tabbar-wrap{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  padding: 0 12.000px calc(8.000px + env(safe-area-inset-bottom));}
+#live-clicker .tabbar-hide{display: none;}
+#live-clicker .tabbar{display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 62.000px;
+  border-radius: 31.000px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6.000px 17.000px rgba(120, 140, 180, 0.22);
+  padding: 0 5.000px;}
+#live-clicker .tab-item{flex: 1 1 0;
+  max-width: 110.000px;
+  height: 50.000px;
+  margin: 0 3.000px;
+  border-radius: 15.000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#live-clicker .tab-on{background: linear-gradient(180deg, #e8f1ff 0%, #dfeafd 100%);}
+#live-clicker .tab-icon{width: 22.000px;
+  height: 22.000px;}
+#live-clicker .tab-text{margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #2c3140;
+  white-space: nowrap;}
+#live-clicker .tab-on .tab-text{color: #2f6fd0;
+  font-weight: 600;}
+#live-sources{background: #eef1f7;
+  color: #1b1f2a;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14.000px;
+  -webkit-font-smoothing: antialiased;}
+#live-sources .body{position: relative;
+  min-height: 812px;}
+#live-sources .bg{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background:
+    radial-gradient(52% 38% at 84% 58%, rgba(118, 226, 212, 0.40) 0%, rgba(118, 226, 212, 0) 70%),
+    radial-gradient(44% 30% at 4% 60%, rgba(246, 192, 212, 0.50) 0%, rgba(246, 192, 212, 0) 72%),
+    radial-gradient(70% 34% at 52% 100%, rgba(176, 202, 255, 0.55) 0%, rgba(176, 202, 255, 0) 72%),
+    linear-gradient(180deg, #f3f5fa 0%, #e9edf6 52%, #e5eaf5 100%);}
+#live-sources .bg-band{position: absolute;
+  left: -30%;
+  top: 30%;
+  width: 160%;
+  height: 34%;
+  z-index: 0;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 48%, rgba(255, 255, 255, 0) 100%);}
+#live-sources .page-body{position: relative;
+  z-index: 1;
+  padding-bottom: 110.000px;}
+#live-sources .nav{position: relative;
+  z-index: 2;
+  box-sizing: content-box;}
+#live-sources .nav-row{display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12.000px 0 16.000px;}
+#live-sources .nav-title{font-size: 21.000px;
+  font-weight: 700;
+  color: #16181f;
+  letter-spacing: 0.500px;}
+#live-sources .nav-gap{flex: 1;}
+#live-sources .tap{opacity: 0.7;}
+#live-sources .card-skin{background: linear-gradient(150deg, #eef6fe 0%, #e9f0fd 58%, #eaf1fb 100%);
+  border-radius: 14.000px;
+  box-shadow: 0 6.000px 15.000px rgba(120, 150, 200, 0.10);}
+#live-sources .primary-btn{margin: 8.000px 14.000px 0;
+  height: 52.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(135deg, #5aa9f8 0%, #3b7ff0 56%, #2f6ff0 100%);
+  box-shadow: 0 7.000px 15.000px rgba(59, 127, 240, 0.32);
+  color: #ffffff;
+  font-size: 18.000px;
+  font-weight: 600;
+  letter-spacing: 1.500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-sources .seg{display: flex;
+  align-items: center;
+  background: #eef1f8;
+  border-radius: 8.000px;
+  padding: 2.000px;}
+#live-sources .seg-item{padding: 5.000px 10.000px;
+  font-size: 12.000px;
+  color: #5a6478;
+  border-radius: 6.000px;}
+#live-sources .seg-on{background: #ffffff;
+  color: #2f6fd0;
+  font-weight: 600;
+  box-shadow: 0 2.000px 5.000px rgba(140, 160, 200, 0.20);}
+#live-sources .seg-lg .seg-item{flex: 1;
+  text-align: center;
+  padding: 8.000px 0;
+  font-size: 13.000px;}
+#live-sources .row-item{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.16);}
+#live-sources .row-item:last-child{border-bottom: none;}
+#live-sources .row-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-sources .row-value{font-size: 13.000px;
+  color: #8b93a7;}
+#live-sources .switch-s{transform: scale(0.78);}
+#live-sources .mask{position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(18, 24, 38, 0.34);
+  
+  z-index: 300;}
+#live-sources .sheet{position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 301;
+  background: #ffffff;
+  border-radius: 17.000px 17.000px 0 0;
+  
+  padding: 0 16.000px;
+  box-shadow: 0 -6.000px 20.000px rgba(30, 45, 80, 0.18);
+  max-height: 633px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;}
+#live-sources .sheet-body{flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: calc(24.000px + env(safe-area-inset-bottom));}
+#live-sources .sheet-head{padding-top: 16.000px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6.000px;}
+#live-sources .sheet-title{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-sources .sheet-close{width: 20.000px;
+  height: 20.000px;
+  opacity: 0.5;}
+#live-sources .sheet-group{margin-top: 13.000px;}
+#live-sources .sheet-group-title{font-size: 12.000px;
+  color: #8b93a7;
+  letter-spacing: 0.500px;}
+#live-sources .radio-row{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 46.000px;
+  border-bottom: 0.500px solid rgba(150, 165, 200, 0.14);}
+#live-sources .radio-row:last-child{border-bottom: none;}
+#live-sources .radio-label{font-size: 14.000px;
+  color: #2c3140;}
+#live-sources .radio-icon{width: 20.000px;
+  height: 20.000px;}
+#live-sources .section-title{display: flex;
+  align-items: baseline;
+  margin: 13.000px 16.000px 0;}
+#live-sources .section-title-main{font-size: 17.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-sources .section-title-sub{margin-left: 7.000px;
+  font-size: 12.000px;
+  color: #8b93a7;}
+#live-sources .mono{font-family: "DIN Alternate", "SF Pro Display", "Helvetica Neue", -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;}
+#live-sources .nav-title{font-size: 20.000px;
+  font-weight: 700;
+  color: #16181f;}
+#live-sources .back-btn{width: 36.000px;
+  height: 36.000px;
+  border-radius: 50%;
+  margin-right: 6.000px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 3.000px 8.000px rgba(140, 160, 200, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-sources .back-icon{width: 20.000px;
+  height: 20.000px;}
+#live-sources .help-btn{width: 32.000px;
+  height: 32.000px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 3.000px 8.000px rgba(140, 160, 200, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-sources .help-sym{font-size: 16.000px;
+  font-weight: 700;
+  color: #5a6478;}
+#live-sources .section-title{margin: 13.000px 16.000px 6.000px;
+  font-size: 14.000px;
+  color: #2c3140;}
+#live-sources .stepper-card{margin: 0 14.000px;
+  padding: 11.000px 11.000px 11.000px 14.000px;
+  border-radius: 13.000px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 6.000px 13.000px rgba(120, 150, 200, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;}
+#live-sources .stepper-left{display: flex;
+  flex-direction: column;}
+#live-sources .stepper-title{font-size: 15.000px;
+  color: #2c3140;}
+#live-sources .stepper-value{margin-top: 3.000px;
+  font-size: 11.000px;
+  color: #98a0b3;}
+#live-sources .stepper{display: flex;
+  align-items: center;
+  height: 32.000px;
+  border-radius: 16.000px;
+  background: #eef1f8;}
+#live-sources .step-btn{width: 46.000px;
+  height: 32.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-sources .step-sym{font-size: 19.000px;
+  color: #2c3140;}
+#live-sources .step-div{width: 0.500px;
+  height: 17.000px;
+  background: rgba(150, 165, 200, 0.5);}
+#live-sources .grid{display: flex;
+  flex-wrap: wrap;
+  padding: 0 9.000px;}
+#live-sources .src-card{width: calc(50% - 10.000px);
+  margin: 5.000px;
+  padding: 10.000px;
+  border-radius: 12.000px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 5.000px 11.000px rgba(120, 150, 200, 0.10);
+  border: 1.000px solid transparent;}
+#live-sources .src-active{background: linear-gradient(150deg, #eef6ff 0%, #e3eefd 100%);
+  border-color: #7fb4f5;
+  box-shadow: 0 6.000px 13.000px rgba(90, 150, 240, 0.22);}
+#live-sources .src-head{display: flex;
+  align-items: center;}
+#live-sources .src-badge{flex: none;
+  min-width: 23.000px;
+  height: 23.000px;
+  padding: 0 4.000px;
+  border-radius: 6.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-sources .src-badge-text{font-size: 9.000px;
+  font-weight: 700;
+  color: #ffffff;}
+#live-sources .src-name{flex: 1;
+  margin-left: 7.000px;
+  font-size: 13.500px;
+  color: #1b1f2a;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;}
+#live-sources .src-sync{flex: none;
+  width: 26.000px;
+  height: 26.000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-sources .src-sync-icon{width: 17.000px;
+  height: 17.000px;}
+#live-sources .src-time{display: block;
+  margin-top: 8.000px;
+  font-size: 15.000px;
+  font-weight: 700;
+  color: #1b1f2a;}
+#live-sources .src-desc{display: block;
+  margin-top: 4.000px;
+  font-size: 11.000px;
+  color: #8b93a7;}
+#live-sources .src-add{display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90.000px;
+  border: 1.000px dashed rgba(140, 160, 200, 0.42);
+  background: rgba(255, 255, 255, 0.5);}
+#live-sources .add-sym{font-size: 26.000px;
+  color: #b7c3d6;}
+#live-sources .status-bar{display: flex;
+  align-items: center;
+  margin: 15.000px 11.000px 0;
+  padding: 9.000px 7.000px;
+  border-radius: 14.000px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 6.000px 14.000px rgba(120, 150, 200, 0.12);}
+#live-sources .status-card{flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;}
+#live-sources .status-right{border-radius: 10.000px;
+  padding: 6.000px 3.000px;
+  background: rgba(255, 236, 232, 0.9);}
+#live-sources .status-badge{width: 30.000px;
+  height: 30.000px;
+  border-radius: 50%;
+  background: #e23c3c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;}
+#live-sources .status-badge-text{font-size: 7.500px;
+  line-height: 1.1;
+  color: #ffffff;
+  font-weight: 700;}
+#live-sources .status-name{margin-top: 4.000px;
+  font-size: 12.000px;
+  color: #2c3140;}
+#live-sources .status-sub{margin-top: 2.000px;
+  font-size: 10.000px;
+  color: #98a0b3;}
+#live-sources .status-mid{display: flex;
+  align-items: center;
+  padding: 0 4.000px;}
+#live-sources .status-arrow{font-size: 15.000px;
+  color: #c2ccdb;}
+#live-sources .status-check{width: 17.000px;
+  height: 17.000px;
+  margin: 0 3.000px;
+  border-radius: 50%;
+  background: #2fbf5b;
+  display: flex;
+  align-items: center;
+  justify-content: center;}
+#live-sources .check-sym{font-size: 10.000px;
+  color: #ffffff;
+  font-weight: 700;}
+#live-sources .status-text{margin-left: 5.000px;
+  font-size: 12.000px;
+  color: #2c3140;}
+#live-sources .status-icon{width: 17.000px;
+  height: 17.000px;}
+#live-sources .status-time{margin-top: 3.000px;
+  font-size: 12.000px;
+  font-weight: 700;
+  color: #1b1f2a;}
+#live-sources .page-body{padding-bottom: 30.000px;}
+#live-float .float-pill{position: absolute;
+  z-index: 200;
+  box-sizing: border-box;
+  padding: 7.000px 10.000px 6.000px;
+  border-radius: 13.000px;
+  background: linear-gradient(165deg, #4a5464 0%, #3c4553 45%, #333b48 100%);
+  box-shadow: 0 8.000px 18.000px rgba(10, 14, 24, 0.42), inset 0 0 0 0.500px rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;}
+#live-float .fp-head{display: flex;
+  align-items: center;
+  justify-content: space-between;}
+#live-float .fp-head-left{display: flex;
+  align-items: center;}
+#live-float .fp-latency{flex: none;}
+#live-float .fp-click{display: flex;
+  align-items: center;
+  margin-left: 8.000px;}
+#live-float .fp-click-label{font-size: 11.000px;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.500px;}
+#live-float .fp-click-dot{width: 8.000px;
+  height: 8.000px;
+  border-radius: 50%;
+  margin-left: 4.000px;}
+#live-float .fp-click-dot-on{background: #37b24d;
+  box-shadow: 0 0 6.000px rgba(55, 178, 77, 0.95);}
+#live-float .fp-click-dot-off{background: #ef5b45;
+  box-shadow: 0 0 6.000px rgba(239, 91, 69, 0.85);}
+#live-float .fp-latency{font-size: 12.000px;
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.500px;}
+#live-float .fp-source{font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.500px;}
+#live-float .fp-main{display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-top: 1.000px;}
+#live-float .fp-time{font-size: 30.000px;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 0.500px;
+  line-height: 1;}
+#live-float .fp-tenth{font-size: 34.000px;
+  font-weight: 700;
+  color: #ee5a2e;
+  line-height: 1;
+  margin-left: 1.000px;}
+#live-float .fp-bottom{width: 100%;
+  height: 31.000px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;}
+#live-float .fp-hide{display: none !important;}
+#live-float .fp-ruler-labels{display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.000px;}
+#live-float .fp-ruler-label{font-size: 10.000px;
+  color: rgba(255, 255, 255, 0.55);}
+#live-float .fp-ruler-track{position: relative;
+  height: 3.000px;
+  margin-top: 4.000px;
+  border-radius: 1.500px;
+  background: rgba(255, 255, 255, 0.22);}
+#live-float .fp-ruler-fill{position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 1.500px;
+  background: linear-gradient(90deg, #d1553a, #ee5a2e);}
+#live-float .fp-ruler-knob{position: absolute;
+  top: 50%;
+  width: 9.000px;
+  height: 9.000px;
+  margin-left: -4.500px;
+  border-radius: 50%;
+  background: #ee5a2e;
+  border: 1.500px solid rgba(255, 255, 255, 0.85);
+  transform: translateY(-50%);
+  box-sizing: border-box;}
+#live-float .fp-perf{display: flex;
+  align-items: flex-end;
+  justify-content: space-between;}
+#live-float .fp-hz{font-size: 13.000px;
+  color: rgba(255, 255, 255, 0.72);}
+#live-float .fp-net{display: flex;
+  flex-direction: column;
+  align-items: flex-end;}
+#live-float .fp-net-line{font-size: 11.000px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.5;}
+#live-clicker .tabbar-wrap,#live-clicker .mask,#live-clicker .sheet,#live-clicker .pick-mask{position: fixed}
+#live-clock .tabbar-wrap,#live-clock .mask,#live-clock .sheet,#live-clock .pick-mask{position: fixed}
+#live-mine .tabbar-wrap,#live-mine .mask,#live-mine .sheet,#live-mine .pick-mask{position: fixed}
+</style>
+</head>
+<body>
+<div id="live-wrap">
+  <div id="live-title">悬浮时钟 · 可操作预览</div>
+  <div id="live-hint">真实走时（毫秒级）、真实倒计时，按钮都可以点：切 Tab、开设置弹层、改时间源、开关悬浮窗并拖动。</div>
+  <div class="dev">
+    <div class="dev-screen">
+      <div class="live-screen on" id="live-clock"><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:44px;height:44px;"><div class="nav-row" style="padding-right:108px;"><span class="nav-title">悬浮时钟</span></div></div><div class="page-body"><div class="event-card card-normal"><div class="ribbon"><img class="ribbon-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIuNyAzYy45IDMuMS0yLjMgNC4yLTIuMyA2LjQgMCAxLjEuOCAyIDEuOCAyIDEuNSAwIDIuNC0xLjUgMi4xLTMuMiAyLjQgMS44IDMuOCA0LjEgMy44IDYuNSAwIDMuNC0yLjggNi4yLTYuMiA2LjJzLTYuMi0yLjgtNi4yLTYuMkM1LjcgMTAuMSAxMC4zIDggMTIuNyAzWiIgZmlsbD0iIzRhYThmMCIvPjwvc3ZnPg=="></div><div class="event-head"><div class="event-thumb"><img class="event-thumb-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIj48cmVjdCB4PSIzLjYiIHk9IjUuMiIgd2lkdGg9IjE2LjgiIGhlaWdodD0iMTMuNiIgcng9IjIuOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIvPjxwYXRoIGQ9Ik0zLjYgOS44aDE2LjgiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxLjgiLz48cGF0aCBkPSJNNy40IDEzLjhoNiIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEuOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><span class="event-title">【淘宝】茅台（MOUTAI）飞天 53%vol 500ml 贵州茅台酒</span></div><div class="event-mid"><div class="price"><span class="price-sym">¥</span><span class="price-num mono">1499.00</span></div><span class="cd-label">倒计时</span></div><div class="event-foot"><span class="event-target">--</span><div class="digits"><div class="digit mono">00</div><span class="colon">:</span><div class="digit mono">00</div><span class="colon">:</span><div class="digit mono">00</div><div class="digit digit-last mono">0</div></div></div></div><div class="ring-wrap"><div class="ring" style="width:250.000px;height:250.000px;"><div class="ring-face"></div><div class="ring-face-inner"></div><div class="ring-face-line"></div><img class="ring-ticks" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3Cline x1='250' y1='8.43' x2='250' y2='23.68' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='275.25' y1='9.75' x2='274.33' y2='18.56' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='300.23' y1='13.71' x2='298.38' y2='22.37' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='324.65' y1='20.25' x2='321.91' y2='28.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='348.26' y1='29.31' x2='344.65' y2='37.4' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='370.79' y1='40.79' x2='363.16' y2='54' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='391.99' y1='54.56' x2='386.79' y2='61.73' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='411.64' y1='70.48' x2='405.72' y2='77.06' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='429.52' y1='88.36' x2='422.94' y2='94.28' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='445.44' y1='108.01' x2='438.27' y2='113.21' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='459.21' y1='129.21' x2='446' y2='136.84' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='470.69' y1='151.74' x2='462.6' y2='155.35' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='479.75' y1='175.35' x2='471.33' y2='178.09' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='486.29' y1='199.77' x2='477.63' y2='201.62' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='490.25' y1='224.75' x2='481.44' y2='225.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='491.57' y1='250' x2='476.32' y2='250' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='490.25' y1='275.25' x2='481.44' y2='274.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='486.29' y1='300.23' x2='477.63' y2='298.38' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='479.75' y1='324.65' x2='471.33' y2='321.91' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='470.69' y1='348.26' x2='462.6' y2='344.65' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='459.21' y1='370.79' x2='446' y2='363.16' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='445.44' y1='391.99' x2='438.27' y2='386.79' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='429.52' y1='411.64' x2='422.94' y2='405.72' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='411.64' y1='429.52' x2='405.72' y2='422.94' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='391.99' y1='445.44' x2='386.79' y2='438.27' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='370.79' y1='459.21' x2='363.16' y2='446' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='348.26' y1='470.69' x2='344.65' y2='462.6' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='324.65' y1='479.75' x2='321.91' y2='471.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='300.23' y1='486.29' x2='298.38' y2='477.63' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='275.25' y1='490.25' x2='274.33' y2='481.44' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='250' y1='491.57' x2='250' y2='476.32' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='224.75' y1='490.25' x2='225.67' y2='481.44' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='199.77' y1='486.29' x2='201.62' y2='477.63' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='175.35' y1='479.75' x2='178.09' y2='471.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='151.74' y1='470.69' x2='155.35' y2='462.6' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='129.21' y1='459.21' x2='136.84' y2='446' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='108.01' y1='445.44' x2='113.21' y2='438.27' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='88.36' y1='429.52' x2='94.28' y2='422.94' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='70.48' y1='411.64' x2='77.06' y2='405.72' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='54.56' y1='391.99' x2='61.73' y2='386.79' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='40.79' y1='370.79' x2='54' y2='363.16' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='29.31' y1='348.26' x2='37.4' y2='344.65' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='20.25' y1='324.65' x2='28.67' y2='321.91' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='13.71' y1='300.23' x2='22.37' y2='298.38' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='9.75' y1='275.25' x2='18.56' y2='274.33' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='8.43' y1='250' x2='23.68' y2='250' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='9.75' y1='224.75' x2='18.56' y2='225.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='13.71' y1='199.77' x2='22.37' y2='201.62' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='20.25' y1='175.35' x2='28.67' y2='178.09' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='29.31' y1='151.74' x2='37.4' y2='155.35' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='40.79' y1='129.21' x2='54' y2='136.84' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='54.56' y1='108.01' x2='61.73' y2='113.21' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='70.48' y1='88.36' x2='77.06' y2='94.28' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='88.36' y1='70.48' x2='94.28' y2='77.06' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='108.01' y1='54.56' x2='113.21' y2='61.73' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='129.21' y1='40.79' x2='136.84' y2='54' stroke='rgba(72,84,124,0.34)' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='151.74' y1='29.31' x2='155.35' y2='37.4' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='175.35' y1='20.25' x2='178.09' y2='28.67' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='199.77' y1='13.71' x2='201.62' y2='22.37' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='224.75' y1='9.75' x2='225.67' y2='18.56' stroke='rgba(72,84,124,0.15)' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='250' cy='21.22' r='5.41' fill='rgb(79,212,232)'/%3E%3Ccircle cx='478.78' cy='250' r='5.41' fill='rgb(139,124,224)'/%3E%3Ccircle cx='250' cy='478.78' r='5.41' fill='rgb(79,212,232)'/%3E%3Ccircle cx='21.22' cy='250' r='5.41' fill='rgb(242,162,184)'/%3E%3C/svg%3E"><img class="ring-arc" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'%3E%3C/svg%3E"><div class="ring-center"><div class="ring-badge"><img class="ring-badge-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU0IiBoZWlnaHQ9IjU0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEzLjEiIHI9IjYuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIvPjxwYXRoIGQ9Ik0xMiA5Ljl2My40bDIuMyAxLjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhmOTVjNiIgc3Ryb2tlLXdpZHRoPSIxLjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIGQ9Ik00LjMgNi4zIDYuNiA0TTE5LjcgNi4zIDE3LjQgNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGY5NWM2IiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"></div><div class="ring-time mono">--:--:--.-</div><div class="ring-sub">北京时间</div></div></div></div><div class="quick-panel"><div class="quick-circle"><img class="quick-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTkuNiAxMmE3LjYgNy42IDAgMSAxLTIuNS01LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuNnY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMTIgOC42djMuNmwyLjggMS43IiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="quick-texts"><span class="quick-title">时间源</span><span class="quick-sub">北京时间</span></div><img class="quick-chevron" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIj48cGF0aCBkPSJNOS44IDUuNiAxNS40IDEybC01LjYgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiNiN2JkYzkiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+"></div><div class="collapse"><img class="collapse-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM4IiBoZWlnaHQ9IjM4Ij48cGF0aCBkPSJNNi4yIDkuNiAxMiAxNS4ybDUuOC01LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzdjODQ5NyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div><div class="panel"><div class="panel-row"><span class="panel-label">抢购震动提醒</span><input class="switch-s" type="checkbox" class="switch-el switch-s" checked></div><div class="panel-row"><span class="panel-label">开启后屏幕常亮</span><input class="switch-s" type="checkbox" class="switch-el switch-s" checked></div><div class="panel-row"><span class="panel-label">刷新精度</span><div class="seg"><div class="seg-item " data-fps="30">30fps</div><div class="seg-item seg-on" data-fps="60">60fps</div></div></div></div><div class="primary-btn">
+      开启悬浮窗
+    </div></div><float-clock></div><div class="tabbar-wrap "><div class="tabbar"><div class="tab-item tab-on" data-index="0"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJmNmZkMCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="tab-text">时钟</span></div><div class="tab-item " data-index="1"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48cGF0aCBkPSJNOC40IDMuMiAxNy42IDEyLjRsLTQuNi42LTIuNCA0LjR6IiBmaWxsPSIjMmMzMTQwIi8+PHBhdGggZD0iTTE1LjQgMTUuMmMuOSAxLjEgMS40IDIuNCAxLjQgMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTguNCAxMy4yYzEuNiAxLjkgMi41IDQuMSAyLjUgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">点击</span></div><div class="tab-item " data-index="2"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">我的</span></div></div></div></div>
+      <div class="live-screen" id="live-mine"><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:44px;height:44px;"><div class="nav-row" style="padding-right:108px;"><span class="nav-title">我的</span></div></div><div class="page-body"><div class="profile"><div class="avatar"><img class="avatar-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="></div><div class="profile-info"><span class="profile-name">微信用户</span><span class="profile-sub">毫秒级走时 · 当前时间源 北京时间</span></div></div><div class="group"><div class="row-item"><div class="row-left"><img class="row-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cmVjdCB4PSI3LjYiIHk9IjMuOCIgd2lkdGg9IjguOCIgaGVpZ2h0PSIxNi40IiByeD0iMi4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTQuMiA5LjR2NS4yTTE5LjggOS40djUuMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNGE1NTcwIiBzdHJva2Utd2lkdGg9IjEuNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+"><span class="row-label">抢购震动提醒</span></div><input class="switch-s" type="checkbox" class="switch-el switch-s" checked></div><div class="row-item"><div class="row-left"><img class="row-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIgMy4yIDE5IDZ2NmMwIDQuMi0yLjkgNy40LTcgOC44LTQuMS0xLjQtNy00LjYtNy04LjhWNloiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNOSAxMi4yIDExLjIgMTQuNCAxNS4yIDEwIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="><span class="row-label">开启后屏幕常亮</span></div><input class="switch-s" type="checkbox" class="switch-el switch-s" checked></div></div><div class="group"><div class="row-item"><div class="row-left"><img class="row-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNMTIgMy4yIDE5IDZ2NmMwIDQuMi0yLjkgNy40LTcgOC44LTQuMS0xLjQtNy00LjYtNy04LjhWNloiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNOSAxMi4yIDExLjIgMTQuNCAxNS4yIDEwIiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="><span class="row-label">关于悬浮时钟</span></div><div class="row-right"><span class="row-value">v1.0.0</span></div></div><div class="row-item"><div class="row-left"><img class="row-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cmVjdCB4PSIzLjgiIHk9IjUuNCIgd2lkdGg9IjE2LjQiIGhlaWdodD0iMTQiIHJ4PSIyLjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzRhNTU3MCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMy44IDEwaDE2LjRNOC40IDMuNHYzLjZNMTUuNiAzLjR2My42IiBmaWxsPSJub25lIiBzdHJva2U9IiM0YTU1NzAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="row-label">清除本地数据</span></div></div></div><div class="footer">毫秒级走时 · 北京时间授时 · 抢购倒计时</div></div><float-clock></div><div class="tabbar-wrap "><div class="tabbar"><div class="tab-item " data-index="0"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="tab-text">时钟</span></div><div class="tab-item " data-index="1"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48cGF0aCBkPSJNOC40IDMuMiAxNy42IDEyLjRsLTQuNi42LTIuNCA0LjR6IiBmaWxsPSIjMmMzMTQwIi8+PHBhdGggZD0iTTE1LjQgMTUuMmMuOSAxLjEgMS40IDIuNCAxLjQgMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTguNCAxMy4yYzEuNiAxLjkgMi41IDQuMSAyLjUgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">点击</span></div><div class="tab-item tab-on" data-index="2"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZmZDAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZmZDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">我的</span></div></div></div></div>
+      <div class="live-screen" id="live-events"><page-meta></page-meta><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:44px;height:44px;"><div class="nav-row" style="padding-right:108px;"><div class="back-btn"><img class="back-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0Ij48cGF0aCBkPSJNMTQuOCA1LjYgOS4yIDEybDUuNiA2LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIyLjEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="></div><span class="nav-title">抢购事件</span><div class="nav-gap"></div><div class="add-btn"><span class="add-text">＋ 新建</span></div></div></div><div class="page-body"><div class="hint">点「设为卡片」即可替换首页那张卡片；长按可删除</div><div class="ev-card ev-active" data-id="evt-0"><div class="ev-top"><span class="ev-tag">酒类</span><span class="ev-title">【淘宝】茅台（MOUTAI）飞天 53%vol 500ml 贵州茅台酒</span></div><div class="ev-mid"><span class="ev-price mono">¥ 1499.00</span><span class="ev-badge">首页卡片</span></div><div class="ev-foot"><span class="ev-target">今天 20:00:00</span><div class="ev-digits"><span class="ev-digit mono">17</span><span class="ev-colon">:</span><span class="ev-digit mono">55</span><span class="ev-colon">:</span><span class="ev-digit mono">32</span><span class="ev-digit ev-digit-last mono">2</span></div></div><div class="ev-actions"><div class="ev-action" data-id="evt-0"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0LjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxLjYiIGZpbGw9IiM4YjkzYTciLz48L3N2Zz4="><span class="ev-action-text">当前卡片</span></div><div class="ev-action" data-id="evt-0"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48cGF0aCBkPSJNNS42IDcuNmgxMi44TTkuNCA3LjZWNS44aDUuMnYxLjhNNy40IDcuNmwuOSAxMWg3LjRsLjktMTEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2MyYzhkNCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="ev-action-text">删除</span></div></div></div><div class="ev-card " data-id="evt-1"><div class="ev-top"><span class="ev-tag">数码</span><span class="ev-title">【京东】Apple iPhone 17 Pro Max 256GB 沙漠色钛金属</span></div><div class="ev-mid"><span class="ev-price mono">¥ 9999.00</span></div><div class="ev-foot"><span class="ev-target">今天 10:00:00</span><div class="ev-digits"><span class="ev-digit mono">07</span><span class="ev-colon">:</span><span class="ev-digit mono">55</span><span class="ev-colon">:</span><span class="ev-digit mono">32</span><span class="ev-digit ev-digit-last mono">2</span></div></div><div class="ev-actions"><div class="ev-action" data-id="evt-1"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI0LjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxLjYiIGZpbGw9IiM4YjkzYTciLz48L3N2Zz4="><span class="ev-action-text">设为卡片</span></div><div class="ev-action" data-id="evt-1"><img class="ev-action-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48cGF0aCBkPSJNNS42IDcuNmgxMi44TTkuNCA3LjZWNS44aDUuMnYxLjhNNy40IDcuNmwuOSAxMWg3LjRsLjktMTEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2MyYzhkNCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="ev-action-text">删除</span></div></div></div></div><div class="mask"></div><div class="sheet"><div class="sheet-head"><span class="sheet-title">新建抢购事件</span><img class="sheet-close" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNNi40IDYuNCAxNy42IDE3LjZNMTcuNiA2LjQgNi40IDE3LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzZiNzI4MCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="></div><div class="form-row"><span class="form-label">商品标题</span><input class="form-input" value=""></div><div class="form-row"><span class="form-label">价格</span><input class="form-input" value=""></div><div class="form-row"><span class="form-label">平台</span><input class="form-input" value=""></div><div class="form-row"><span class="form-label">开抢时间</span><div><div class="form-picker">20:00 ›</div></div></div><div class="form-row"><span class="form-label">重复方式</span><div class="seg"><div class="seg-item seg-on" data-kind="daily">每日</div><div class="seg-item " data-kind="once">仅一次</div></div></div><div class="form-row"><span class="form-label">分类</span><div class="tag-list"><div class="tag tag-on" data-tag="酒类">酒类</div><div class="tag " data-tag="数码">数码</div><div class="tag " data-tag="球鞋">球鞋</div><div class="tag " data-tag="美妆">美妆</div><div class="tag " data-tag="门票">门票</div></div></div><div class="primary-btn sheet-btn">保存并设为首页卡片</div></div><float-clock></div></div>
+      <div class="live-screen" id="live-clicker"><page-meta></page-meta><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:44px;height:44px;"><div class="nav-row" style="padding-right:108px;"><span class="nav-title">定时点击</span><div class="nav-gap"></div><div class="add-btn"><span class="add-sym">＋</span><span class="add-text">新建</span></div></div></div><div class="page-body"><div class="float-bar "><div class="float-bar-left"><div class="float-dot"></div><span class="float-bar-text">悬浮窗未开启 · 定时点击不会生效</span></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyha66y8">删除</div><div class="task-card  card-muted" data-id="task-mu1jyha66y8"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">14:29:05</span><span class="task-time-ms mono">.2</span></div><span class="task-place">X 172</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">first</span><span class="task-repeat">每天</span></div><span class="task-place">Y 308</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyha64gt">删除</div><div class="task-card  card-muted" data-id="task-mu1jyha64gt"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">16:26:00</span><span class="task-time-ms mono">.1</span></div><span class="task-place">X 96</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 512</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyha661">删除</div><div class="task-card  card-muted" data-id="task-mu1jyha661"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">17:23:00</span><span class="task-time-ms mono">.3</span></div><span class="task-place">X 280</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 420</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyha65kp">删除</div><div class="task-card  card-muted" data-id="task-mu1jyha65kp"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">20:26:00</span><span class="task-time-ms mono">.4</span></div><span class="task-place">X 188</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 700</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyha67lw">删除</div><div class="task-card  card-muted" data-id="task-mu1jyha67lw"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">04:26:00</span><span class="task-time-ms mono">.5</span></div><span class="task-place">X 120</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 240</span></div></div></div></div><div class="task-row"><div class="task-delete" data-id="task-mu1jyha66u1">删除</div><div class="task-card  card-muted" data-id="task-mu1jyha66u1"><div class="task-left"><div class="task-time"><div class="task-time-text"><span class="task-time-main mono">05:26:00</span><span class="task-time-ms mono">.6</span></div><span class="task-place">X 260</span></div><div class="task-sub"><div class="task-sub-text"><span class="task-name">闹钟</span><span class="task-repeat">每天</span></div><span class="task-place">Y 560</span></div></div></div></div></div><div class="mask"></div><div class="sheet"><div class="sheet-head"><span class="sheet-title">新建定时点击</span><img class="sheet-close" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj48cGF0aCBkPSJNNi40IDYuNCAxNy42IDE3LjZNMTcuNiA2LjQgNi40IDE3LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzZiNzI4MCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="></div><div class="sheet-body"><div class="time-preview"><span class="time-main mono">00:00:00</span><span class="time-ms mono">.000</span></div><div class="stepper-row"><span class="stepper-label">时</span><div class="stepper"><div class="step-btn" data-key="h" data-delta="-1">−</div><span class="step-value mono">00</span><div class="step-btn" data-key="h" data-delta="1">+</div></div></div><div class="stepper-row"><span class="stepper-label">分</span><div class="stepper"><div class="step-btn" data-key="m" data-delta="-1">−</div><span class="step-value mono">00</span><div class="step-btn" data-key="m" data-delta="1">+</div></div></div><div class="stepper-row"><span class="stepper-label">秒</span><div class="stepper"><div class="step-btn" data-key="s" data-delta="-1">−</div><span class="step-value mono">00</span><div class="step-btn" data-key="s" data-delta="1">+</div></div></div><div class="stepper-row"><span class="stepper-label">毫秒</span><div class="stepper"><div class="step-btn" data-key="ms" data-delta="-1">−</div><span class="step-value mono">000</span><div class="step-btn" data-key="ms" data-delta="1">+</div></div></div><div class="form-row"><span class="form-label">名称</span><input class="form-input" value=""></div><div class="form-row"><span class="form-label">重复</span><div class="seg"><div class="seg-item seg-on" data-repeat="daily">每天</div><div class="seg-item " data-repeat="once">仅一次</div></div></div><div class="form-row"><span class="form-label">位置</span><div class="place-value"><span class="place-text place-on">X NaN · Y NaN</span><span class="place-tag">清除</span></div></div><div class="coord-wrap"><div class="coord-head"><span class="coord-title">坐标系</span><span class="coord-hint">单位 px，原点在左上角</span></div><div class="coord-panel"><div class="coord-axis coord-axis-x"></div><div class="coord-axis coord-axis-y"></div><div class="coord-marker" style="left:50%;top:50%"><div class="coord-marker-dot"></div></div><span class="coord-corner coord-tl">0,0</span><span class="coord-corner coord-br">375 × 812</span></div><div class="pick-btn">全屏取点</div></div><div class="sheet-actions"><div class="primary-btn sheet-btn">保存</div></div></div></div><div class="pick-mask"><span class="pick-tip">点击屏幕任意位置取点</span><span class="pick-sub">坐标以屏幕左上角为原点（单位 px）</span><div class="pick-cancel">取消</div></div><float-clock></div><div class="tabbar-wrap "><div class="tabbar"><div class="tab-item " data-index="0"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="tab-text">时钟</span></div><div class="tab-item tab-on" data-index="1"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48cGF0aCBkPSJNOC40IDMuMiAxNy42IDEyLjRsLTQuNi42LTIuNCA0LjR6IiBmaWxsPSIjMmY2ZmQwIi8+PHBhdGggZD0iTTE1LjQgMTUuMmMuOSAxLjEgMS40IDIuNCAxLjQgMy44IiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZmZDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cGF0aCBkPSJNMTguNCAxMy4yYzEuNiAxLjkgMi41IDQuMSAyLjUgNi40IiBmaWxsPSJub25lIiBzdHJva2U9IiMyZjZmZDAiIHN0cm9rZS13aWR0aD0iMS42IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">点击</span></div><div class="tab-item " data-index="2"><img class="tab-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjguNiIgcj0iMy45IiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43Ii8+PHBhdGggZD0iTTUgMTkuNmMuOC0zLjQgMy42LTUuMiA3LTUuMnM2LjIgMS44IDcgNS4yIiBmaWxsPSJub25lIiBzdHJva2U9IiMyYzMxNDAiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4="><span class="tab-text">我的</span></div></div></div></div>
+      <div class="live-screen" id="live-sources"><div class="page"><div class="bg"></div><div class="bg-band"></div><div class="nav" style="padding-top:44px;height:44px;"><div class="nav-row" style="padding-right:108px;"><div class="back-btn"><img class="back-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0Ij48cGF0aCBkPSJNMTQuOCA1LjYgOS4yIDEybDUuNiA2LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzJjMzE0MCIgc3Ryb2tlLXdpZHRoPSIyLjEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="></div><span class="nav-title">时间源</span><div class="nav-gap"></div><div class="help-btn"><span class="help-sym">?</span></div></div></div><div class="page-body"><div class="section-title">手动调整时间</div><div class="stepper-card"><div class="stepper-left"><span class="stepper-title">手动微调</span><span class="stepper-value">+0.000s</span></div><div class="stepper"><div class="step-btn"><span class="step-sym">−</span></div><div class="step-div"></div><div class="step-btn"><span class="step-sym">+</span></div></div></div><div class="section-title">选择时间源</div><div class="grid"><div class="src-card " data-key="device"><div class="src-head"><div class="src-badge" style="background:#ff4d4f"><span class="src-badge-text">设</span></div><span class="src-name">设备时间</span><div class="src-sync" data-key="device"><img class="src-sync-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2Ij48cGF0aCBkPSJNMTkuNCAxMmE3LjQgNy40IDAgMSAxLTIuNC01LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhYTZiZCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuOHY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWE2YmQiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div></div><span class="src-time mono">02:04:27.7</span><span class="src-desc">设备时间</span></div><div class="src-card src-active" data-key="beijing"><div class="src-head"><div class="src-badge" style="background:#e23c3c"><span class="src-badge-text">北京</span></div><span class="src-name">北京时间</span><div class="src-sync" data-key="beijing"><img class="src-sync-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2Ij48cGF0aCBkPSJNMTkuNCAxMmE3LjQgNy40IDAgMSAxLTIuNC01LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhYTZiZCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuOHY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWE2YmQiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div></div><span class="src-time mono">02:04:39.0</span><span class="src-desc">已校准:+11.2584s</span></div><div class="src-card " data-key="taobao"><div class="src-head"><div class="src-badge" style="background:#ff5000"><span class="src-badge-text">淘</span></div><span class="src-name">淘宝</span><div class="src-sync" data-key="taobao"><img class="src-sync-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2Ij48cGF0aCBkPSJNMTkuNCAxMmE3LjQgNy40IDAgMSAxLTIuNC01LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhYTZiZCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuOHY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWE2YmQiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div></div><span class="src-time mono">02:04:39.0</span><span class="src-desc">已校准:+11.2507s</span></div><div class="src-card " data-key="tmall"><div class="src-head"><div class="src-badge" style="background:#ff0036"><span class="src-badge-text">天猫</span></div><span class="src-name">天猫</span><div class="src-sync" data-key="tmall"><img class="src-sync-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2Ij48cGF0aCBkPSJNMTkuNCAxMmE3LjQgNy40IDAgMSAxLTIuNC01LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhYTZiZCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuOHY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWE2YmQiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div></div><span class="src-time mono">02:04:39.0</span><span class="src-desc">已校准:+11.2561s</span></div><div class="src-card " data-key="jd"><div class="src-head"><div class="src-badge" style="background:#e1251b"><span class="src-badge-text">京东</span></div><span class="src-name">京东</span><div class="src-sync" data-key="jd"><img class="src-sync-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2Ij48cGF0aCBkPSJNMTkuNCAxMmE3LjQgNy40IDAgMSAxLTIuNC01LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhYTZiZCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuOHY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWE2YmQiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div></div><span class="src-time mono">02:04:39.0</span><span class="src-desc">已校准:+11.2559s</span></div><div class="src-card " data-key="damai"><div class="src-head"><div class="src-badge" style="background:#ff6a00"><span class="src-badge-text">大麦</span></div><span class="src-name">大麦</span><div class="src-sync" data-key="damai"><img class="src-sync-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2Ij48cGF0aCBkPSJNMTkuNCAxMmE3LjQgNy40IDAgMSAxLTIuNC01LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhYTZiZCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuOHY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWE2YmQiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div></div><span class="src-time mono">02:04:39.0</span><span class="src-desc">已校准:+11.2553s</span></div><div class="src-card " data-key="pdd"><div class="src-head"><div class="src-badge" style="background:#e02e24"><span class="src-badge-text">拼</span></div><span class="src-name">拼多多</span><div class="src-sync" data-key="pdd"><img class="src-sync-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2Ij48cGF0aCBkPSJNMTkuNCAxMmE3LjQgNy40IDAgMSAxLTIuNC01LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhYTZiZCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuOHY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWE2YmQiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div></div><span class="src-time mono">02:04:39.0</span><span class="src-desc">已校准:+11.2574s</span></div><div class="src-card " data-key="unionpay"><div class="src-head"><div class="src-badge" style="background:#d81e06"><span class="src-badge-text">云闪付</span></div><span class="src-name">云闪付</span><div class="src-sync" data-key="unionpay"><img class="src-sync-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2Ij48cGF0aCBkPSJNMTkuNCAxMmE3LjQgNy40IDAgMSAxLTIuNC01LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhYTZiZCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuOHY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWE2YmQiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div></div><span class="src-time mono">02:04:39.0</span><span class="src-desc">已校准:+11.2533s</span></div><div class="src-card " data-key="meituan"><div class="src-head"><div class="src-badge" style="background:#ffc300"><span class="src-badge-text">美团</span></div><span class="src-name">美团</span><div class="src-sync" data-key="meituan"><img class="src-sync-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2Ij48cGF0aCBkPSJNMTkuNCAxMmE3LjQgNy40IDAgMSAxLTIuNC01LjQiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhYTZiZCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxwYXRoIGQ9Ik0xNy4yIDIuOHY0LjJoNC4yIiBmaWxsPSJub25lIiBzdHJva2U9IiM5YWE2YmQiIHN0cm9rZS13aWR0aD0iMS43IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="></div></div><span class="src-time mono">02:04:39.0</span><span class="src-desc">已校准:+11.2515s</span></div><div class="src-card src-add"><span class="add-sym">＋</span></div></div><div class="status-bar"><div class="status-card"><div class="status-badge"><span class="status-badge-text">北京</span><span class="status-badge-text">时间</span></div><span class="status-name">北京时间</span><span class="status-sub">国家授时中心</span></div><div class="status-mid"><span class="status-arrow">‹</span><div class="status-check"><span class="check-sym">✓</span></div><span class="status-arrow">›</span><span class="status-text">已同步</span></div><div class="status-card status-right"><img class="status-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciLz48cGF0aCBkPSJNMTIgNy4zVjEybDMuMiAyLjEiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzhiOTNhNyIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg=="><span class="status-name">显示时间 ›</span><span class="status-time mono">--:--:--.-</span></div></div></div><float-clock></div></div>
+      <div id="live-float-wrap" class="live-hidden"><div id="live-float"><div class="float-pill" style="left:40px;top:130px;width:220px;height:118px;"><div class="fp-head"><div class="fp-head-left"><span class="fp-latency">40ms</span><div class="fp-click"><span class="fp-click-label">点击</span><div class="fp-click-dot fp-click-dot-off"></div></div></div><span class="fp-source">北京时间</span></div><div class="fp-main"><span class="fp-time mono">--:--:--.</span><span class="fp-tenth mono">-</span></div><div class="fp-bottom"><div class="fp-ruler-labels fp-hide"><span class="fp-ruler-label">2.5</span><span class="fp-ruler-label">2.0</span><span class="fp-ruler-label">1.5</span><span class="fp-ruler-label">1.0</span><span class="fp-ruler-label">0.5</span></div><div class="fp-ruler-track fp-hide"><div class="fp-ruler-fill" style="width:0%"></div><div class="fp-ruler-knob" style="left:0%"></div></div><div class="fp-perf "><span class="fp-hz">60Hz</span><div class="fp-net"><span class="fp-net-line">↑ 11 KB/s</span><span class="fp-net-line">↓ 0 KB/s</span></div></div></div></div></div></div>
+      <div id="live-toast"></div>
+    </div>
+    <div class="dev-island"><b></b><i></i></div>
+    <div class="dev-status">
+      <div class="st-l"><span id="live-status-time">20:06</span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M20.5 3.5 3.5 20.5" stroke="#16181f" stroke-width="2.4" stroke-linecap="round"/><path d="M5 19 19 5l-4 0 0 4" fill="#16181f"/></svg>
+      </div>
+      <div class="st-r">
+        <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="7.5" width="3" height="4.5" rx="1" fill="#16181f"/><rect x="4.6" y="5.4" width="3" height="6.6" rx="1" fill="#16181f"/><rect x="9.2" y="3" width="3" height="9" rx="1" fill="#16181f"/><rect x="13.8" y="0.6" width="3" height="11.4" rx="1" fill="#16181f" opacity=".35"/></svg>
+        <svg width="15" height="12" viewBox="0 0 15 12"><path d="M7.5 10.6 9.9 8.2a3.4 3.4 0 0 0-4.8 0z" fill="#16181f"/><path d="M3.6 6.3a7 7 0 0 1 7.8 0" stroke="#16181f" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M1.4 3.6a10.4 10.4 0 0 1 12.2 0" stroke="#16181f" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".45"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13"><rect x="0.6" y="0.6" width="21" height="11.8" rx="3.2" stroke="#16181f" stroke-opacity=".38" fill="none"/><rect x="2.2" y="2.2" width="14.4" height="8.6" rx="2" fill="#16181f"/><path d="M23.4 4.4v4.2a2.2 2.2 0 0 0 0-4.2z" fill="#16181f" fill-opacity=".38"/></svg>
+        <span id="live-status-batt">72</span>
+      </div>
+    </div>
+    <div class="dev-vbar" id="live-vbar">
+      <div class="dev-vbar-track"></div>
+      <div class="dev-vbar-thumb" id="live-vbar-thumb"></div>
+    </div>
+    <div class="dev-capsule"><i></i><i></i><i></i><b></b></div>
+    <div class="dev-home"></div>
+  </div>
+  <div id="live-note">状态栏时间、环形时钟、卡片倒计时都是实时计算的；时间源切换后环形时钟下方标签与「我的」页会同步。页面完全自包含，无外部请求。</div>
+</div>
+<script>
+(function () {
+  var root = document.getElementById("live-wrap");
+  if (!root) return;
+  var time = (function () { var module = { exports: {} }; var exports = module.exports;// 时间计算：北京时间 / 本机时间 / 服务器时间（带漂移校准）
+const BJ_OFFSET = 8 * 60 * 60 * 1000
+const DAY = 24 * 60 * 60 * 1000
+
+const SOURCE_LABEL = {
+  beijing: '北京时间',
+  device: '本机时间',
+  server: '服务器时间'
+}
+
+function pad(n, len) {
+  let s = String(Math.floor(Math.abs(n)))
+  const width = len || 2
+  while (s.length < width) s = '0' + s
+  return s
+}
+
+// 返回目标时区的“挂钟”字段
+function parts(epochMs, source, serverOffset) {
+  const offset = serverOffset || 0
+  let d
+  let utc = false
+  if (source === 'beijing') {
+    d = new Date(epochMs + BJ_OFFSET)
+    utc = true
+  } else if (source === 'server') {
+    d = new Date(epochMs + offset)
+  } else {
+    d = new Date(epochMs)
+  }
+  const g = (name) => (utc ? d['getUTC' + name]() : d['get' + name]())
+  return {
+    year: g('FullYear'),
+    month: g('Month') + 1,
+    date: g('Date'),
+    day: g('Day'),
+    hours: g('Hours'),
+    minutes: g('Minutes'),
+    seconds: g('Seconds'),
+    ms: g('Milliseconds')
+  }
+}
+
+function sourceLabel(source) {
+  return SOURCE_LABEL[source] || SOURCE_LABEL.beijing
+}
+
+// 走时文本：HH:MM:SS.d（十分位）
+function formatClock(p) {
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds) + '.' + Math.floor(p.ms / 100)
+}
+
+// 倒计时拆分（用于卡片数字块）
+function countdownParts(targetTs, epochMs) {
+  const remain = Math.max(0, (targetTs || epochMs) - epochMs)
+  return {
+    h: pad(Math.floor(remain / 3600000) % 100),
+    m: pad(Math.floor(remain / 60000) % 60),
+    s: pad(Math.floor(remain / 1000) % 60),
+    t: String(Math.floor((remain % 1000) / 100)),
+    remain
+  }
+}
+
+function countdownText(targetTs, epochMs) {
+  const c = countdownParts(targetTs, epochMs)
+  return c.h + ':' + c.m + ':' + c.s
+}
+
+// 以北京时间为基准的当日某个时刻的时间戳
+function beijingEpochOf(h, m, s, epochMs) {
+  const p = parts(epochMs, 'beijing')
+  return Date.UTC(p.year, p.month - 1, p.date, h || 0, m || 0, s || 0, 0) - BJ_OFFSET
+}
+
+// 下一次北京时间 hh:mm:ss（当天已过则顺延一天）
+function nextBeijing(h, m, s, epochMs) {
+  const now = epochMs || Date.now()
+  let t = beijingEpochOf(h, m, s, now)
+  while (t <= now) t += DAY
+  return t
+}
+
+// 目标日期相对今天的天数描述
+function dayOffsetLabel(targetTs, epochMs) {
+  const a = parts(epochMs || Date.now(), 'beijing')
+  const b = parts(targetTs, 'beijing')
+  const da = Date.UTC(a.year, a.month - 1, a.date)
+  const db = Date.UTC(b.year, b.month - 1, b.date)
+  const diff = Math.round((db - da) / DAY)
+  if (diff <= 0) return '今天'
+  return diff + '天后'
+}
+
+function clockLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return pad(p.hours) + ':' + pad(p.minutes) + ':' + pad(p.seconds)
+}
+
+function dateLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.month + '月' + p.date + '日'
+}
+
+function fullLabel(ts) {
+  const p = parts(ts, 'beijing')
+  return p.year + '-' + pad(p.month) + '-' + pad(p.date) + ' ' + pad(p.hours) + ':' + pad(p.minutes)
+}
+
+// 解析 "20:00:00"
+function parseHMS(text) {
+  const arr = String(text || '20:00:00').split(':').map(function (v) { return parseInt(v, 10) || 0 })
+  return { h: arr[0] || 0, m: arr[1] || 0, s: arr[2] || 0 }
+}
+
+module.exports = {
+  BJ_OFFSET: BJ_OFFSET,
+  DAY: DAY,
+  pad: pad,
+  parts: parts,
+  sourceLabel: sourceLabel,
+  formatClock: formatClock,
+  countdownParts: countdownParts,
+  countdownText: countdownText,
+  beijingEpochOf: beijingEpochOf,
+  nextBeijing: nextBeijing,
+  dayOffsetLabel: dayOffsetLabel,
+  clockLabel: clockLabel,
+  dateLabel: dateLabel,
+  fullLabel: fullLabel,
+  parseHMS: parseHMS
+}; return module.exports; })();
+  var ringSvg = (function () { var module = { exports: {} }; var exports = module.exports;// 环形时钟的矢量图形（纯函数，不依赖 wx）
+//
+// 为什么不用 canvas：
+//   canvas 在部分 iOS / 开发者工具环境下会被渲染成「最上层的原生层」，
+//   任何 DOM（表盘中央的文字、悬浮窗）都会被它盖住 —— 真机上表现为
+//   「圆盘时钟里没有内容」+「悬浮窗被钟面压住」。
+//   改成 SVG data URI 交给 <image> 渲染后，它就是普通 DOM：
+//   层级按 z-index 走（悬浮窗想盖就盖得住），而且矢量在任何 dpr 下都不糊。
+//
+// 设计基准：viewBox 0 0 500 500，与组件宽度 500rpx 一一对应。
+
+const BOX = 500
+
+/** 各种半径/线宽（单位 = viewBox 单位，1 单位 = 1rpx） */
+function metrics() {
+  const c = BOX / 2
+  const PX = BOX / 2 // 500rpx 见方 = 250px（375 设计稿 1rpx = 0.5px）
+  const Rpx = PX / 2 - 2 // 旧 canvas 版：R = min(w,h)/2 - 2（px）= 123
+  const R = Rpx * 2      // 换成 viewBox 单位
+  return {
+    box: BOX,
+    c: c,
+    R: R,
+    tickOuter: R * 0.982,
+    tickMajor: R * 0.062,
+    tickMinor: R * 0.036,
+    tickMajorW: 2 * Math.max(2, Rpx * 0.0135),
+    tickMinorW: 2 * Math.max(1.2, Rpx * 0.0075),
+    arcR: R * 0.862,
+    arcW: 2 * Math.max(3, Rpx * 0.026),
+    dotR: 2 * Math.max(2.6, Rpx * 0.022),
+    dotRing: R * 0.93,
+    innerR: R * 0.88,
+    lineR: R * 0.88 + (R - R * 0.88) * 0.42,
+    shadowBlur: 2 * Rpx * 0.17,
+    shadowY: 2 * Rpx * 0.055
+  }
+}
+
+const DOTS = [
+  { a: -90, c: 'rgb(79,212,232)' },
+  { a: 0, c: 'rgb(139,124,224)' },
+  { a: 90, c: 'rgb(79,212,232)' },
+  { a: 180, c: 'rgb(242,162,184)' }
+]
+
+function r2(n) {
+  return Math.round(n * 100) / 100
+}
+
+/** SVG 文本 -> data URI（只需要转义几个字符，颜色一律用 rgb() 避免 # 转义） */
+function toUrl(svg) {
+  return 'data:image/svg+xml,' + svg
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/"/g, "'")
+    .replace(/%/g, '%25')
+    .replace(/#/g, '%23')
+    .replace(/</g, '%3C')
+    .replace(/>/g, '%3E')
+}
+
+/** 刻度（60 格，每 5 格加长）+ 四色定位点：静态，只算一次 */
+function ticksSvg() {
+  const m = metrics()
+  const parts = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + BOX + ' ' + BOX + '">']
+  for (let i = 0; i < 60; i++) {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / 60
+    const major = i % 5 === 0
+    const len = major ? m.tickMajor : m.tickMinor
+    const x1 = m.c + Math.cos(a) * m.tickOuter
+    const y1 = m.c + Math.sin(a) * m.tickOuter
+    const x2 = m.c + Math.cos(a) * (m.tickOuter - len)
+    const y2 = m.c + Math.sin(a) * (m.tickOuter - len)
+    parts.push('<line x1="' + r2(x1) + '" y1="' + r2(y1) + '" x2="' + r2(x2) + '" y2="' + r2(y2) +
+      '" stroke="' + (major ? 'rgba(72,84,124,0.34)' : 'rgba(72,84,124,0.15)') +
+      '" stroke-width="' + r2(major ? m.tickMajorW : m.tickMinorW) + '" stroke-linecap="round"/>')
+  }
+  for (let i = 0; i < DOTS.length; i++) {
+    const a = (DOTS[i].a * Math.PI) / 180
+    parts.push('<circle cx="' + r2(m.c + Math.cos(a) * m.dotRing) + '" cy="' + r2(m.c + Math.sin(a) * m.dotRing) +
+      '" r="' + r2(m.dotR) + '" fill="' + DOTS[i].c + '"/>')
+  }
+  parts.push('</svg>')
+  return toUrl(parts.join(''))
+}
+
+/** 进度弧的 path：从 12 点开始顺时针扫 sweepDeg 度（纯函数，方便单测） */
+function arcPath(sweepDeg) {
+  const m = metrics()
+  const sweep = Math.max(0.01, Math.min(359.99, sweepDeg))
+  const a0 = -Math.PI / 2
+  const a1 = a0 + (sweep * Math.PI) / 180
+  const x0 = m.c + Math.cos(a0) * m.arcR
+  const y0 = m.c + Math.sin(a0) * m.arcR
+  const x1 = m.c + Math.cos(a1) * m.arcR
+  const y1 = m.c + Math.sin(a1) * m.arcR
+  const large = sweep > 180 ? 1 : 0
+  return 'M ' + r2(x0) + ' ' + r2(y0) + ' A ' + r2(m.arcR) + ' ' + r2(m.arcR) + ' 0 ' + large + ' 1 ' + r2(x1) + ' ' + r2(y1)
+}
+
+/** 进度弧：progress 0..1（当前分钟内走过的比例），太短就不画 */
+function arcSvg(progress) {
+  const m = metrics()
+  const head = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + BOX + ' ' + BOX + '">'
+  const p = typeof progress === 'number' && isFinite(progress) ? progress : 0
+  if (p <= 0.004) return toUrl(head + '</svg>')
+  const defs = '<defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="' + r2(m.c - m.R) + '" y1="' + r2(m.c - m.R) +
+    '" x2="' + r2(m.c + m.R * 0.7) + '" y2="' + r2(m.c + m.R) + '">' +
+    '<stop offset="0" stop-color="rgb(198,205,246)"/><stop offset="0.5" stop-color="rgb(180,189,242)"/>' +
+    '<stop offset="1" stop-color="rgb(163,175,240)"/></linearGradient></defs>'
+  return toUrl(head + defs + '<path d="' + arcPath(p * 360) + '" fill="none" stroke="url(#g)" stroke-width="' +
+    r2(m.arcW) + '" stroke-linecap="round"/></svg>')
+}
+
+module.exports = {
+  BOX: BOX,
+  metrics: metrics,
+  ticksSvg: ticksSvg,
+  arcSvg: arcSvg,
+  arcPath: arcPath,
+  toUrl: toUrl
+}
+;return module.exports })();
+  var ICONS = {"checkOn":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQyIiBoZWlnaHQ9IjQyIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI5IiBmaWxsPSIjMmY2ZmQwIi8+PHBhdGggZD0iTTcuOCAxMi4zIDEwLjYgMTVsNS42LTYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=","checkOff":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQyIiBoZWlnaHQ9IjQyIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI4LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M5Y2ZkYiIgc3Ryb2tlLXdpZHRoPSIxLjYiLz48L3N2Zz4=","chevronDown":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM4IiBoZWlnaHQ9IjM4Ij48cGF0aCBkPSJNNi4yIDkuNiAxMiAxNS4ybDUuOC01LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzdjODQ5NyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=","chevronUp":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjM4IiBoZWlnaHQ9IjM4Ij48cGF0aCBkPSJNNi4yIDE0LjQgMTIgOC44bDUuOCA1LjYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzdjODQ5NyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4="};
+  var sources = (function () { var module = { exports: {} }; var exports = module.exports;// 时间源清单：设备时间 / 北京时间（国家授时）/ 各平台服务器时间
+// kind: device=跟随本机；beijing=北京时间基准；server=平台服务器（已校准）
+const SOURCES = [
+  { key: 'device', name: '设备时间', kind: 'device', calibMs: 0, color: '#ff4d4f', badge: '设' },
+  { key: 'beijing', name: '北京时间', kind: 'beijing', calibMs: 11258.4, color: '#e23c3c', badge: '北京' },
+  { key: 'taobao', name: '淘宝', kind: 'server', calibMs: 11250.7, color: '#ff5000', badge: '淘' },
+  { key: 'tmall', name: '天猫', kind: 'server', calibMs: 11256.1, color: '#ff0036', badge: '天猫' },
+  { key: 'jd', name: '京东', kind: 'server', calibMs: 11255.9, color: '#e1251b', badge: '京东' },
+  { key: 'damai', name: '大麦', kind: 'server', calibMs: 11255.3, color: '#ff6a00', badge: '大麦' },
+  { key: 'pdd', name: '拼多多', kind: 'server', calibMs: 11257.4, color: '#e02e24', badge: '拼' },
+  { key: 'unionpay', name: '云闪付', kind: 'server', calibMs: 11253.3, color: '#d81e06', badge: '云闪付' },
+  { key: 'meituan', name: '美团', kind: 'server', calibMs: 11251.5, color: '#ffc300', badge: '美团' }
+]
+
+const DEFAULT_KEY = 'beijing'
+
+function list() {
+  return SOURCES
+}
+
+function get(key) {
+  for (let i = 0; i < SOURCES.length; i++) {
+    if (SOURCES[i].key === key) return SOURCES[i]
+  }
+  return SOURCES[1]
+}
+
+function name(key) {
+  return get(key).name
+}
+
+function isDevice(key) {
+  return get(key).kind === 'device'
+}
+
+/** 该时间源相对本机时钟的偏移（毫秒），含手动微调 */
+function offsetMs(key, manualMs) {
+  return get(key).calibMs + (manualMs || 0)
+}
+
+function signed(seconds) {
+  return (seconds >= 0 ? '+' : '') + seconds.toFixed(4)
+}
+
+/** 卡片副标题：设备时间 / 已校准:+11.2584s */
+function descOf(key, manualMs) {
+  if (isDevice(key)) return '设备时间'
+  return '已校准:' + signed(offsetMs(key, manualMs) / 1000) + 's'
+}
+
+/** 环形时钟取值方式：设备时间走本机挂钟；其余源走「设备挂钟 + 补偿」，与卡片显示完全一致 */
+function clockSource(key) {
+  return isDevice(key) ? 'device' : 'server'
+}
+
+/** 环形时钟需要补偿的毫秒数 */
+function clockOffset(key, manualMs) {
+  return isDevice(key) ? 0 : offsetMs(key, manualMs)
+}
+
+/** 重新校准：模拟网络往返抖动 */
+function resync(key) {
+  const item = get(key)
+  if (item.kind === 'device') return item.calibMs
+  const jitter = (Math.random() - 0.5) * 4
+  item.calibMs = Math.round((item.calibMs + jitter) * 10) / 10
+  return item.calibMs
+}
+
+module.exports = {
+  SOURCES: SOURCES,
+  DEFAULT_KEY: DEFAULT_KEY,
+  list: list,
+  get: get,
+  name: name,
+  isDevice: isDevice,
+  offsetMs: offsetMs,
+  descOf: descOf,
+  clockSource: clockSource,
+  clockOffset: clockOffset,
+  resync: resync,
+  signed: signed
+}; return module.exports; })();
+  var EVENTS_SEED = [{"title":"【淘宝】茅台（MOUTAI）飞天 53%vol 500ml 贵州茅台酒","price":"1499.00","tag":"酒类","platform":"淘宝","at":"20:00:00"},{"title":"【京东】Apple iPhone 17 Pro Max 256GB 沙漠色钛金属","price":"9999.00","tag":"数码","platform":"京东","at":"10:00:00"}];
+  var TASK_SEED = [{"parts":{"h":14,"m":29,"s":5,"ms":200},"name":"first","repeat":"daily","enabled":true,"place":{"x":172,"y":308,"label":"X 172 · Y 308"}},{"parts":{"h":16,"m":26,"s":0,"ms":100},"name":"闹钟","repeat":"daily","enabled":true,"place":{"x":96,"y":512,"label":"X 96 · Y 512"}},{"parts":{"h":17,"m":23,"s":0,"ms":300},"name":"闹钟","repeat":"daily","enabled":true,"place":{"x":280,"y":420,"label":"X 280 · Y 420"}},{"parts":{"h":20,"m":26,"s":0,"ms":400},"name":"闹钟","repeat":"daily","enabled":true,"place":{"x":188,"y":700,"label":"X 188 · Y 700"}},{"parts":{"h":4,"m":26,"s":0,"ms":500},"name":"闹钟","repeat":"daily","enabled":true,"place":{"x":120,"y":240,"label":"X 120 · Y 240"}},{"parts":{"h":5,"m":26,"s":0,"ms":600},"name":"闹钟","repeat":"daily","enabled":true,"place":{"x":260,"y":560,"label":"X 260 · Y 560"}}];
+  var state = {"source":"beijing","haptic":true,"keepScreenOn":true,"fps":60};
+  var el = function (id) { return document.getElementById(id); };
+  var q = function (sel, ctx) { return (ctx || root).querySelector(sel); };
+  var qa = function (sel, ctx) { return Array.prototype.slice.call((ctx || root).querySelectorAll(sel)); };
+
+  function toast(text) {
+    var t = el("live-toast");
+    if (!t) return;
+    t.textContent = text;
+    t.className = "on";
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function () { t.className = ""; }, 1200);
+  }
+  function buzz(ms) {
+    if (state.haptic && navigator && navigator.vibrate) { try { navigator.vibrate(ms || 12); } catch (e) {} }
+  }
+
+  // ---- 环形时钟：DOM + SVG（刻度/定位点静态，进度弧按当前分钟比例更新） ----
+  var clockText = "--:--:--.-", lastArc = "";
+  function paintRing(now) {
+    var p = time.parts(now, state.source, 780);
+    var text = time.formatClock(p);
+    var sub = state.sourceName || "北京时间";
+    if (text !== clockText) {
+      clockText = text;
+      setText(q("#live-clock .ring-time"), text);
+      setText(q("#live-clock .ring-sub"), sub);
+    } else { setText(q("#live-clock .ring-sub"), sub) }
+    var arc = ringSvg.arcSvg((p.seconds + p.ms / 1000) / 60);
+    if (arc !== lastArc) {
+      lastArc = arc;
+      var node = q("#live-clock .ring-arc");
+      if (node && node.getAttribute("src") !== arc) node.setAttribute("src", arc);
+    }
+  }
+
+  // ---- 倒计时（真实计算：下一个北京时间 20:00） ----
+  var targetTs = 0, started = false;
+  function ensureTarget(now) { if (!targetTs || targetTs <= now) targetTs = time.nextBeijing(20, 0, 0, now) }
+  function paintCard(now) {
+    var cd = time.countdownParts(targetTs, now);
+    var digits = qa("#live-clock .digits .digit");
+    if (digits.length === 4) {
+      if (digits[0].textContent !== cd.h) digits[0].textContent = cd.h;
+      if (digits[1].textContent !== cd.m) digits[1].textContent = cd.m;
+      if (digits[2].textContent !== cd.s) digits[2].textContent = cd.s;
+      if (digits[3].textContent !== cd.t) digits[3].textContent = cd.t;
+    }
+    var t = q("#live-clock .event-target");
+    var label = time.dayOffsetLabel(targetTs, now) + " " + time.clockLabel(targetTs);
+    if (t && t.textContent !== label) t.textContent = label;
+    return cd.h + ":" + cd.m + ":" + cd.s;
+  }
+
+  function paintChrome(now) {
+    var p = time.parts(now, state.source, 780);
+    var st = el("live-status-time");
+    var hhmm = time.pad(p.hours) + ":" + time.pad(p.minutes);
+    if (st && st.textContent !== hhmm) st.textContent = hhmm;
+    var batt = el("live-status-batt");
+    if (batt && batt.textContent !== String(72)) batt.textContent = "72";
+  }
+
+  function paintFloat(cdText) {
+    var wrap = el("live-float-wrap");
+    if (!wrap || wrap.className.indexOf("live-hidden") >= 0) return;
+    var text = clockText || "--:--:--.-";
+    var main = text.length > 1 ? text.slice(0, text.length - 1) : text;
+    var tenth = text.length > 1 ? text.slice(text.length - 1) : "-";
+    var sec = 0;
+    if (text.length >= 10) { var ss = parseInt(text.slice(6, 8), 10); var tt = parseInt(text.slice(9, 10), 10); sec = (isNaN(ss) ? 0 : ss) + (isNaN(tt) ? 0 : tt / 10); }
+    var rulerVisible = sec >= 57.5;
+    var remain = targetTs ? Math.max(0, targetTs - nowMs) : 0;
+    var pct = rulerVisible ? Math.round(((sec - 57.5) / 2.5) * 1000) / 10 : 0;
+    var label = state.sourceName || "北京时间";
+    var lat = latencyOf(label);
+    var near = !!(tasksUI && typeof tasksUI.hasNear === "function" && tasksUI.hasNear(time.parts(Date.now(), state.source, 0), NEAR_WINDOW_MS));
+    var pills = qa("#live-float .float-pill");
+    for (var i = 0; i < pills.length; i++) {
+      var pill = pills[i];
+      setText(q(".fp-time", pill), main);
+      setText(q(".fp-tenth", pill), tenth);
+      setText(q(".fp-latency", pill), lat);
+      var dot = q(".fp-click-dot", pill);
+      if (dot) {
+        var nearCls = "fp-click-dot " + (near ? "fp-click-dot-on" : "fp-click-dot-off");
+        if (dot.className !== nearCls) dot.className = nearCls;
+      }
+      setText(q(".fp-source", pill), label);
+      setClass(q(".fp-ruler-labels", pill), "fp-ruler-labels", rulerVisible);
+      setClass(q(".fp-ruler-track", pill), "fp-ruler-track", rulerVisible);
+      setClass(q(".fp-perf", pill), "fp-perf", !rulerVisible);
+      var fill = q(".fp-ruler-fill", pill);
+      if (fill) fill.style.width = pct + "%";
+      var knob = q(".fp-ruler-knob", pill);
+      if (knob) knob.style.left = pct + "%";
+      setText(q(".fp-hz", pill), fpsText);
+      var nets = qa(".fp-net-line", pill);
+      if (nets[0]) setText(nets[0], "↑ " + upText + " KB/s");
+      if (nets[1]) setText(nets[1], "↓ " + downText + " KB/s");
+    }
+  }
+
+  function frame() {
+    nowMs = now;
+    var now = Date.now();
+    ensureTarget(now);
+    paintRing(now);
+    var cdText = paintCard(now);
+    paintChrome(now);
+    paintFloat(cdText);
+    if (sourcesUI) sourcesUI.paint(now);
+    if (eventsUI) eventsUI.paint(now);
+    frameCount++;
+    if (now - frameWindow >= 1000) { fpsText = Math.max(30, Math.min(144, frameCount)) + "Hz"; frameCount = 0; frameWindow = now; bumpFloatStats(); }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 交互 ---------- */
+  /* ---------- 右侧上下调节滑块（原生条在 Windows 上是覆盖式的、看不见，这里自己画）---------- */
+  var vbarDrag = null
+  function activeScreen() {
+    var names = ["live-clock", "live-clicker", "live-mine", "live-events", "live-sources"];
+    for (var i = 0; i < names.length; i++) {
+      var s = el(names[i]);
+      if (s && s.className.indexOf("on") >= 0) return s;
+    }
+    return null;
+  }
+  function paintVbar() {
+    var sc = activeScreen();
+    var bar = el("live-vbar");
+    var thumb = el("live-vbar-thumb");
+    if (!bar || !thumb) return;
+    var max = sc ? sc.scrollHeight - sc.clientHeight : 0;
+    if (!sc || max <= 1) { if (bar.className !== "dev-vbar") bar.className = "dev-vbar"; return }
+    if (bar.className !== "dev-vbar on") bar.className = "dev-vbar on";
+    var trackH = bar.offsetHeight || 500;
+    var h = Math.max(30, Math.round(trackH * sc.clientHeight / sc.scrollHeight));
+    var top = Math.round((trackH - h) * (sc.scrollTop / max));
+    if (thumb.style.height !== h + "px") thumb.style.height = h + "px";
+    if (thumb.style.top !== top + "px") thumb.style.top = top + "px";
+  }
+  function bindVbar() {
+    var thumb = el("live-vbar-thumb");
+    if (!thumb) return;
+    thumb.addEventListener("pointerdown", function (e) {
+      var sc = activeScreen();
+      if (!sc) return;
+      var bar = el("live-vbar");
+      var trackH = (bar && bar.offsetHeight) || 500;
+      var h = thumb.offsetHeight || 30;
+      vbarDrag = { y: e.clientY, top: sc.scrollTop, k: (sc.scrollHeight - sc.clientHeight) / Math.max(1, trackH - h) };
+      if (thumb.setPointerCapture) { try { thumb.setPointerCapture(e.pointerId) } catch (err) {} }
+      e.preventDefault();
+    });
+    var onMove = function (e) {
+      if (!vbarDrag) return;
+      var sc = activeScreen();
+      if (!sc) { vbarDrag = null; return }
+      sc.scrollTop = vbarDrag.top + (e.clientY - vbarDrag.y) * vbarDrag.k;
+      paintVbar();
+      e.preventDefault();
+    };
+    var onUp = function () { vbarDrag = null };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    qa(".live-screen").forEach(function (s) { s.addEventListener("scroll", paintVbar) });
+    window.addEventListener("resize", paintVbar);
+  }
+  setInterval(paintVbar, 250);  // 列表增删 / 弹层开关都会改可滚高度，定时刷最稳
+  function switchTab(index) {
+    var eventsScreen = el("live-events");
+    if (eventsScreen) eventsScreen.className = "live-screen";
+    var names = ["live-clock", "live-clicker", "live-mine"];
+    for (var i = 0; i < names.length; i++) {
+      var scr = el(names[i]);
+      if (scr) scr.className = "live-screen" + (i === index ? " on" : "");
+    }
+    syncFloatState();
+    paintVbar();
+    buzz(8);
+  }
+  // 时间源统一入口：环形时钟 / 首页文案 / 我的 三处联动
+  var nowMs = Date.now();
+  var fpsText = "60Hz", upText = "11", downText = "0";
+  var frameCount = 0, frameWindow = Date.now();
+  function latencyOf(name) {
+    var h = 0, s = String(name || "");
+    for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 97;
+    return (32 + (h % 14)) + "ms";
+  }
+  function setText(node, value) {
+    if (node && node.textContent !== value) node.textContent = value;
+  }
+  function setClass(node, base, show) {
+    if (!node) return;
+    var next = show ? base : base + " fp-hide";
+    if (node.className !== next) node.className = next;
+  }
+  function bumpFloatStats() {
+    upText = String(Math.max(0, Math.round(Number(upText) + (Math.random() - 0.45) * 6)));
+    downText = String(Math.max(0, Math.round(Number(downText) + (Math.random() - 0.5) * 4)));
+  }
+  // 悬浮窗开关的唯一真值来源 = 悬浮窗是否真实可见（与首页按钮、点击页状态条共用）
+  var tasksUI = null;
+  function floatIsOn() {
+    var wrap = el("live-float-wrap");
+    return !!(wrap && wrap.className.indexOf("live-hidden") < 0);
+  }
+  function syncFloatState() {
+    if (tasksUI && typeof tasksUI.syncFloat === "function") tasksUI.syncFloat();
+  }
+  var clockCtl = {
+    setSource: function (o) {
+      state.source = o.source;
+      state.sourceName = o.name;
+      // 环形时钟的 paintRing 直接读 state.source，这里不用再同步组件实例
+      var quick = q("#live-clock .quick-sub");
+      if (quick) quick.textContent = o.name;
+      var profile = q("#live-mine .profile-sub");
+      if (profile) profile.textContent = "毫秒级走时 · 当前时间源 " + o.name;
+    },
+    getTarget: function () { return targetTs; },
+    setTarget: function (v) { targetTs = v; }
+  };
+  function syncSwitches() {
+    var keys = ["haptic", "keepScreenOn"];
+    qa("input.switch-el").forEach(function (el2) {
+      var box = el2.closest(".panel-row") || el2.closest(".radio-row") || el2.closest(".row-item");
+      if (!box) return;
+      var label = q(".panel-label", box) || q(".row-label", box);
+      if (!label) return;
+      var text = label.textContent;
+      var key = text.indexOf("震动") >= 0 ? "haptic" : (text.indexOf("常亮") >= 0 ? "keepScreenOn" : null);
+      if (!key) return;
+      el2.checked = !!state[key];
+    });
+  }
+  function hidePanel() {
+    var panel = q("#live-clock .panel");
+    if (panel && panel.className.indexOf("live-hidden") < 0) togglePanel();
+  }
+  function togglePanel() {
+    var panel = q("#live-clock .panel");
+    var icon = q("#live-clock .collapse-icon");
+    if (!panel) return;
+    var hidden = panel.className.indexOf("live-hidden") >= 0;
+    panel.className = hidden ? "panel" : "panel live-hidden";
+    if (icon) icon.src = hidden ? ICONS.chevronDown : ICONS.chevronUp;
+    buzz(8);
+  }
+  function showFloat() {
+    var wrap = el("live-float-wrap");
+    if (wrap) wrap.className = "";
+    var btn = q("#live-clock .primary-btn");
+    if (btn) btn.textContent = "关闭悬浮窗";
+    syncFloatState();
+    var pills = wrap ? qa(".float-pill", wrap) : [];
+    for (var pi = 0; pi < pills.length; pi++) {
+      if (pills[pi].getAttribute("data-pos")) continue;
+      pills[pi].setAttribute("data-pos", "1");
+      makeDraggable(pills[pi]);
+    }
+    buzz(10);
+  }
+  function hideFloat() {
+    var wrap = el("live-float-wrap");
+    if (wrap && wrap.className.indexOf("live-hidden") < 0) wrap.className = "live-hidden";
+    var btn = q("#live-clock .primary-btn");
+    if (btn) btn.textContent = "开启悬浮窗";
+    syncFloatState();
+  }
+  function makeDraggable(node) {
+    var dragging = false, moved = false, sx = 0, sy = 0, ox = 0, oy = 0;
+    var MARGIN = 8, TOP_SAFE = 44;
+    node.style.cursor = "grab";
+    node.addEventListener("pointerdown", function (e) {
+      dragging = true;
+      node.style.cursor = "grabbing";
+      sx = e.clientX; sy = e.clientY;
+      ox = parseFloat(node.style.left) || 0;
+      oy = parseFloat(node.style.top) || 0;
+      if (node.setPointerCapture) { try { node.setPointerCapture(e.pointerId); } catch (err) {} }
+      e.preventDefault();
+    });
+    node.addEventListener("pointermove", function (e) {
+      if (!dragging) return;
+      if (Math.abs(e.clientX - sx) > 6 || Math.abs(e.clientY - sy) > 6) moved = true;
+      var maxX = Math.max(MARGIN, 375 - node.offsetWidth - MARGIN);
+      var maxY = Math.max(TOP_SAFE, 812 - node.offsetHeight - MARGIN);
+      node.style.left = Math.min(maxX, Math.max(MARGIN, ox + (e.clientX - sx))) + "px";
+      node.style.top = Math.min(maxY, Math.max(TOP_SAFE, oy + (e.clientY - sy))) + "px";
+    });
+    function end() { dragging = false; moved = false; node.style.cursor = "grab"; }
+    node.addEventListener("pointerup", end);
+    node.addEventListener("pointercancel", end);
+  }
+
+  /* ---------- 绑定 ---------- */
+  qa(".tabbar-wrap").forEach(function (bar) {
+    qa(".tab-item", bar).forEach(function (item, i) {
+      item.classList.add("live-tap");
+      item.addEventListener("click", function () { switchTab(i); });
+    });
+  });
+  var collapse = q("#live-clock .collapse");
+  if (collapse) { collapse.classList.add("live-tap"); collapse.addEventListener("click", togglePanel); }
+  var primary = q("#live-clock .primary-btn");
+  if (primary) {
+    primary.classList.add("live-tap");
+    primary.addEventListener("click", function () {
+      var wrap = el("live-float-wrap");
+      if (wrap && wrap.className.indexOf("live-hidden") >= 0) showFloat(); else hideFloat();
+    });
+  }
+  // 「我的 → 清除本地数据」：恢复 6 组预设（与真机 store.resetAll 行为一致）
+  qa("#live-mine .row-item").forEach(function (row) {
+    var label = q(".row-label", row);
+    if (!label || label.textContent.indexOf("清除本地数据") < 0) return;
+    row.classList.add("live-tap");
+    row.addEventListener("click", function () {
+      var n2 = tasksUI && tasksUI.resetTasks ? tasksUI.resetTasks() : 0;
+      toast("已恢复 " + n2 + " 组预设");
+      buzz(12);
+    });
+  });
+  // 「我的」页的时间源行已按需求删除 —— 不要在这里再用位置选择器绑 row-item，
+  // 否则会命中下一条「抢购震动提醒」。时间源统一从首页入口进。
+  qa("#live-clock .panel-row").forEach(function (row) {
+    row.classList.add("live-tap");
+    row.addEventListener("click", function (e) {
+      if (e.target && e.target.tagName === "INPUT") return;
+      var box = q("input.switch-el", row);
+      if (box) { box.checked = !box.checked; box.dispatchEvent(new Event("change")); }
+    });
+  });
+  qa("input.switch-el").forEach(function (box) {
+    box.addEventListener("change", function () {
+      var container = box.closest(".panel-row") || box.closest(".row-item");
+      var label = container ? (q(".panel-label", container) || q(".row-label", container)) : null;
+      var text = label ? label.textContent : "";
+      var key = text.indexOf("震动") >= 0 ? "haptic" : (text.indexOf("常亮") >= 0 ? "keepScreenOn" : null);
+      if (!key) return;
+      state[key] = !!box.checked;
+      syncSwitches();
+      buzz(8);
+      toast(label.textContent.replace(/^\s+|\s+$/g, "") + (box.checked ? " 已开启" : " 已关闭"));
+    });
+  });
+  var fpsSegs = qa("#live-clock .panel .seg-item");
+  fpsSegs.forEach(function (seg) {
+    seg.classList.add("live-tap");
+    seg.addEventListener("click", function () {
+      fpsSegs.forEach(function (s) { s.className = s.className.replace(" seg-on", ""); });
+      seg.className = seg.className + " seg-on";
+      state.fps = parseInt(seg.textContent, 10) || 60;
+      toast("刷新精度 " + seg.textContent);
+    });
+  });
+
+  /* ---------- 初始状态 ---------- */
+  hidePanel();
+  var sourcesUI = initSourcesPreview({ el: el, q: q, qa: qa, time: time, sources: sources, toast: toast, buzz: buzz, hideFloat: hideFloat, clock: clockCtl });
+  tasksUI = initTasksPreview({ el: el, q: q, qa: qa, toast: toast, buzz: buzz, hideFloat: hideFloat, seed: TASK_SEED, getFloatOn: floatIsOn });
+  syncFloatState();
+  var eventsUI = initEventsPreview({ el: el, q: q, qa: qa, time: time, toast: toast, buzz: buzz, hideFloat: hideFloat, seed: EVENTS_SEED, clock: clockCtl });
+  syncSwitches();
+  bindVbar();
+  switchTab(0);
+  requestAnimationFrame(frame);
+// 抢购事件页（现场预览用）：卡片点击进入、返回、设为卡片、删除、新建
+// 由 build-live.js 注入到预览页脚本中，上下文由外部传入
+function initEventsPreview(ctx) {
+  var el = ctx.el
+  var q = ctx.q
+  var qa = ctx.qa
+  var time = ctx.time
+  var toast = ctx.toast
+  var buzz = ctx.buzz
+  var hideFloat = ctx.hideFloat
+  var clock = ctx.clock
+
+  var EVENTS = ctx.seed.slice()
+  var activeIndex = 0
+
+  function eventTargetTs(ev) {
+    var hms = time.parseHMS(ev.at)
+    return time.nextBeijing(hms.h, hms.m, hms.s, Date.now())
+  }
+
+  function open() {
+    el('live-clock').className = 'live-screen'
+    el('live-mine').className = 'live-screen'
+    el('live-events').className = 'live-screen on'
+    hideFloat()
+    hideSheetLocal()
+    paint(Date.now())
+    buzz(8)
+  }
+
+  function back() {
+    el('live-events').className = 'live-screen'
+    el('live-clock').className = 'live-screen on'
+    applyActive()
+    buzz(8)
+  }
+
+  // 把当前选中的事件同步到首页卡片
+  function applyActive() {
+    var ev = EVENTS[activeIndex]
+    if (!ev) return
+    clock.setTarget(eventTargetTs(ev))
+    var title = q('#live-clock .event-title')
+    if (title) title.textContent = ev.title
+    var price = q('#live-clock .price-num')
+    if (price) price.textContent = ev.price
+  }
+
+  function paint(now) {
+    var cards = qa('#live-events .ev-card')
+    for (var i = 0; i < cards.length && i < EVENTS.length; i++) {
+      var ts = eventTargetTs(EVENTS[i])
+      var cd = time.countdownParts(ts, now)
+      var digits = qa('.ev-digit', cards[i])
+      if (digits.length === 4) {
+        if (digits[0].textContent !== cd.h) digits[0].textContent = cd.h
+        if (digits[1].textContent !== cd.m) digits[1].textContent = cd.m
+        if (digits[2].textContent !== cd.s) digits[2].textContent = cd.s
+        if (digits[3].textContent !== cd.t) digits[3].textContent = cd.t
+      }
+      var target = q('.ev-target', cards[i])
+      if (target) {
+        var label = time.dayOffsetLabel(ts, now) + ' ' + time.clockLabel(ts)
+        if (target.textContent !== label) target.textContent = label
+      }
+      cards[i].className = 'ev-card' + (i === activeIndex ? ' ev-active' : '')
+    }
+  }
+
+  function syncBadges() {
+    var cards = qa('#live-events .ev-card')
+    for (var i = 0; i < cards.length; i++) {
+      var text = q('.ev-action-text', cards[i])
+      if (text) text.textContent = (i === activeIndex) ? '当前卡片' : '设为卡片'
+      var badge = q('.ev-badge', cards[i])
+      if (badge) badge.className = (i === activeIndex) ? 'ev-badge' : 'ev-badge live-hidden'
+    }
+  }
+
+  function hideSheetLocal() {
+    var mask = q('#live-events .mask')
+    var sheet = q('#live-events .sheet')
+    if (mask) mask.className = 'mask live-hidden'
+    if (sheet) sheet.className = 'sheet live-hidden'
+  }
+
+  function showSheetLocal() {
+    var mask = q('#live-events .mask')
+    var sheet = q('#live-events .sheet')
+    if (mask) mask.className = 'mask'
+    if (sheet) sheet.className = 'sheet'
+    buzz(8)
+  }
+
+  function bindCards() {
+    qa('#live-events .ev-card').forEach(function (card, i) {
+      var actions = qa('.ev-action', card)
+      if (actions[0] && !actions[0].getAttribute('data-bound')) {
+        actions[0].setAttribute('data-bound', '1')
+        actions[0].classList.add('live-tap')
+        actions[0].addEventListener('click', function (e) {
+          e.stopPropagation()
+          activeIndex = i
+          syncBadges()
+          toast('已设为首页卡片')
+          setTimeout(back, 350)
+        })
+      }
+      if (actions[1] && !actions[1].getAttribute('data-bound')) {
+        actions[1].setAttribute('data-bound', '1')
+        actions[1].classList.add('live-tap')
+        actions[1].addEventListener('click', function (e) {
+          e.stopPropagation()
+          var index = qa('#live-events .ev-card').indexOf(card)
+          if (card.parentNode) card.parentNode.removeChild(card)
+          if (index >= 0) EVENTS.splice(index, 1)
+          if (activeIndex >= EVENTS.length) activeIndex = 0
+          syncBadges()
+          toast('已删除')
+        })
+      }
+    })
+  }
+
+  function buildCard(ev) {
+    var first = q('#live-events .ev-card')
+    if (!first) return null
+    var node = first.cloneNode(true)
+    var title = q('.ev-title', node)
+    if (title) title.textContent = ev.title
+    var price = q('.ev-price', node)
+    if (price) price.textContent = '¥ ' + ev.price
+    var tag = q('.ev-tag', node)
+    if (tag) tag.textContent = ev.tag
+    var actions = qa('.ev-action', node)
+    for (var i = 0; i < actions.length; i++) actions[i].removeAttribute('data-bound')
+    return node
+  }
+
+  // ---- 绑定 ----
+  var card = q('#live-clock .event-card')
+  if (card) {
+    card.classList.add('live-tap')
+    card.addEventListener('click', open)
+  }
+  var backBtn = q('#live-events .back-btn')
+  if (backBtn) {
+    backBtn.classList.add('live-tap')
+    backBtn.addEventListener('click', back)
+  }
+  var addBtn = q('#live-events .add-btn')
+  if (addBtn) {
+    addBtn.classList.add('live-tap')
+    addBtn.addEventListener('click', showSheetLocal)
+  }
+  var mask = q('#live-events .mask')
+  if (mask) mask.addEventListener('click', hideSheetLocal)
+  var closeBtn = q('#live-events .sheet-close')
+  if (closeBtn) {
+    closeBtn.classList.add('live-tap')
+    closeBtn.addEventListener('click', hideSheetLocal)
+  }
+  var saveBtn = q('#live-events .sheet .primary-btn')
+  if (saveBtn) {
+    saveBtn.classList.add('live-tap')
+    saveBtn.addEventListener('click', function () {
+      var inputs = qa('#live-events .form-input')
+      var title = (inputs[0] && inputs[0].value) ? inputs[0].value : ''
+      if (!title) { toast('请填写商品标题'); return }
+      var ev = {
+        title: title,
+        price: (inputs[1] && inputs[1].value) || '0.00',
+        platform: (inputs[2] && inputs[2].value) || '自定义',
+        tag: '自定义',
+        at: '20:00:00'
+      }
+      var body = q('#live-events .page-body')
+      var node = buildCard(ev)
+      if (body && node) body.appendChild(node)
+      EVENTS.push(ev)
+      activeIndex = EVENTS.length - 1
+      bindCards()
+      syncBadges()
+      hideSheetLocal()
+      toast('已添加并设为首页卡片')
+      setTimeout(back, 350)
+    })
+  }
+  var segs = qa('#live-events .seg-item')
+  segs.forEach(function (seg) {
+    seg.classList.add('live-tap')
+    seg.addEventListener('click', function () {
+      segs.forEach(function (s) { s.className = s.className.replace(' seg-on', '') })
+      seg.className = seg.className + ' seg-on'
+    })
+  })
+  var tags = qa('#live-events .tag')
+  tags.forEach(function (tag) {
+    tag.classList.add('live-tap')
+    tag.addEventListener('click', function () {
+      tags.forEach(function (t) { t.className = t.className.replace(' tag-on', '') })
+      tag.className = tag.className + ' tag-on'
+    })
+  })
+
+  hideSheetLocal()
+  bindCards()
+  syncBadges()
+
+  return { paint: paint, open: open, back: back }
+}
+// 时间源页（现场预览用）：手动微调、多源卡片、校准、返回
+// 由 build-live.js 注入到预览脚本中
+function initSourcesPreview(ctx) {
+  var el = ctx.el
+  var q = ctx.q
+  var qa = ctx.qa
+  var time = ctx.time
+  var sources = ctx.sources
+  var toast = ctx.toast
+  var buzz = ctx.buzz
+  var hideFloat = ctx.hideFloat
+  var clock = ctx.clock
+
+  var manualMs = 0
+  var currentKey = 'beijing'
+
+  function textOf(key, now) {
+    var offset = sources.offsetMs(key, manualMs)
+    var parts = sources.isDevice(key)
+      ? time.parts(now, 'device', 0)
+      : time.parts(now + offset, 'device', 0)
+    return time.formatClock(parts)
+  }
+
+  function open() {
+    el('live-clock').className = 'live-screen'
+    el('live-mine').className = 'live-screen'
+    el('live-clicker').className = 'live-screen'
+    el('live-events').className = 'live-screen'
+    el('live-sources').className = 'live-screen on'
+    hideFloat()
+    buzz(8)
+  }
+
+  function back() {
+    el('live-sources').className = 'live-screen'
+    el('live-clock').className = 'live-screen on'
+    applyToClock()
+    buzz(8)
+  }
+
+  function applyToClock() {
+    clock.setSource({
+      key: currentKey,
+      name: sources.name(currentKey),
+      source: sources.clockSource(currentKey),
+      offset: sources.clockOffset(currentKey, manualMs)
+    })
+  }
+
+  function paint(now) {
+    var cards = qa('#live-sources .src-card')
+    for (var i = 0; i < cards.length; i++) {
+      var key = cards[i].getAttribute('data-key')
+      if (!key) continue
+      cards[i].className = 'src-card' + (key === currentKey ? ' src-active' : '')
+      var timeNode = q('.src-time', cards[i])
+      if (timeNode) {
+        var t = textOf(key, now)
+        if (timeNode.textContent !== t) timeNode.textContent = t
+      }
+      var descNode = q('.src-desc', cards[i])
+      if (descNode) {
+        var d = sources.descOf(key, manualMs)
+        if (descNode.textContent !== d) descNode.textContent = d
+      }
+    }
+    var manualNode = q('#live-sources .stepper-value')
+    if (manualNode) {
+      var mt = sources.signed(manualMs / 1000) + 's'
+      if (manualNode.textContent !== mt) manualNode.textContent = mt
+    }
+    var current = q('#live-sources .status-time')
+    if (current) {
+      var ct = textOf(currentKey, now)
+      if (current.textContent !== ct) current.textContent = ct
+    }
+    var nameNode = q('#live-sources .status-name')
+    if (nameNode) {
+      var nm = sources.name(currentKey)
+      if (nameNode.textContent !== nm) nameNode.textContent = nm
+    }
+  }
+
+  function select(key) {
+    currentKey = key
+    paint(Date.now())
+    applyToClock()
+    buzz(8)
+    toast('已切换到 ' + sources.name(key))
+  }
+
+  // ---- 绑定 ----
+  var row = q('#live-clock .quick-panel')
+  if (row) {
+    row.classList.add('live-tap')
+    row.addEventListener('click', open)
+  }
+  var backBtn = q('#live-sources .back-btn')
+  if (backBtn) {
+    backBtn.classList.add('live-tap')
+    backBtn.addEventListener('click', back)
+  }
+  var helpBtn = q('#live-sources .help-btn')
+  if (helpBtn) {
+    helpBtn.classList.add('live-tap')
+    helpBtn.addEventListener('click', function () {
+      toast('各平台时间已按网络延迟校准')
+    })
+  }
+  var stepBtns = qa('#live-sources .step-btn')
+  if (stepBtns[0]) {
+    stepBtns[0].classList.add('live-tap')
+    stepBtns[0].addEventListener('click', function () {
+      manualMs = Math.max(-2000, manualMs - 50)
+      paint(Date.now())
+      applyToClock()
+      toast('手动微调 ' + sources.signed(manualMs / 1000) + 's')
+    })
+  }
+  if (stepBtns[1]) {
+    stepBtns[1].classList.add('live-tap')
+    stepBtns[1].addEventListener('click', function () {
+      manualMs = Math.min(2000, manualMs + 50)
+      paint(Date.now())
+      applyToClock()
+      toast('手动微调 ' + sources.signed(manualMs / 1000) + 's')
+    })
+  }
+  qa('#live-sources .src-card').forEach(function (card) {
+    var key = card.getAttribute('data-key')
+    if (!key) return
+    card.classList.add('live-tap')
+    card.addEventListener('click', function () { select(key) })
+  })
+  qa('#live-sources .src-sync').forEach(function (btn) {
+    var key = btn.getAttribute('data-key')
+    if (!key) return
+    btn.classList.add('live-tap')
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation()
+      sources.resync(key)
+      paint(Date.now())
+      applyToClock()
+      toast(sources.isDevice(key) ? '设备时间无需校准' : '已重新校准 ' + sources.name(key))
+    })
+  })
+  var addCard = q('#live-sources .src-add')
+  if (addCard) {
+    addCard.classList.add('live-tap')
+    addCard.addEventListener('click', function () {
+      toast('自定义时间源后续版本支持')
+    })
+  }
+
+  applyToClock()
+  paint(Date.now())
+
+  return { paint: paint, open: open, back: back, select: select }
+}
+/* NEAR-BEGIN */
+const NEAR_WINDOW_MS = 5 * 60 * 1000 // ±5 分钟
+
+/** 'HH:MM:SS.mmm' -> 一天中的毫秒数；非法返回 null */
+function hmsToDayMs(text) {
+  const m = String(text || '').trim().match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\.(\d{1,3}))?$/)
+  if (!m) return null
+  const h = parseInt(m[1], 10)
+  const mi = parseInt(m[2], 10)
+  const s = m[3] === undefined ? 0 : parseInt(m[3], 10)
+  const ms = m[4] === undefined ? 0 : parseInt((m[4] + '00').slice(0, 3), 10)
+  if (h > 23 || mi > 59 || s > 59 || ms > 999) return null
+  return ((h * 60 + mi) * 60 + s) * 1000 + ms
+}
+
+/**
+ * 时钟 parts -> 一天中的毫秒数
+ * time.parts() 给的是 { hours, minutes, seconds, ms }
+ * tasks.parseTime() 给的是 { h, m, s, ms }
+ * 两种都认，免得调用方各写一份换算。
+ */
+function partsToDayMs(parts) {
+  const p = parts || {}
+  const pick = (long, short) => (p[long] === undefined ? p[short] || 0 : p[long])
+  const h = pick('hours', 'h')
+  const m = pick('minutes', 'm')
+  const s = pick('seconds', 's')
+  return ((h * 60 + m) * 60 + s) * 1000 + (p.ms || 0)
+}
+
+/** 环形时差：跨零点（如 23:58 与 00:02）也按近距离算 */
+function dayDiff(a, b) {
+  const DAY = 86400000
+  const d = Math.abs(a - b) % DAY
+  return Math.min(d, DAY - d)
+}
+
+/**
+ * 取一项任务的时间 -> 一天中的毫秒数；取不到返回 null
+ * 兼容两种数据形状：
+ *   小程序存储   { time: '14:29:05.2', ... }
+ *   网页预览内联 { parts: { h, m, s, ms }, ... }
+ */
+function taskDayMs(item) {
+  if (!item) return null
+  if (typeof item.time === 'string') {
+    const t = hmsToDayMs(item.time)
+    if (t !== null) return t
+  }
+  if (item.parts) return partsToDayMs(item.parts)
+  return null
+}
+
+/**
+ * 扫描定时点击列表：存在与「当前时刻」相差 <= windowMs 的项 → true，否则 false
+ * 定时项都是「每天」（repeat=daily），所以只比较一天中的时刻，不看日期。
+ * 列表里所有项一律参与判定（页面上已无单项开关，不读 enabled 字段）。
+ */
+function hasTaskNear(list, parts, windowMs) {
+  const win = typeof windowMs === 'number' ? windowMs : NEAR_WINDOW_MS
+  const now = partsToDayMs(parts)
+  const arr = list || []
+  for (let i = 0; i < arr.length; i++) {
+    const t = taskDayMs(arr[i])
+    if (t === null) continue
+    if (dayDiff(t, now) <= win) return true
+  }
+  return false
+}
+// 「点击」页（现场预览用）：定时点击任务列表 + 毫秒级时间编辑弹层
+// 由 build-live.js 注入到预览脚本中
+function initTasksPreview(ctx) {
+  var el = ctx.el
+  var q = ctx.q
+  var qa = ctx.qa
+  var toast = ctx.toast
+  var buzz = ctx.buzz
+  var hideFloat = ctx.hideFloat
+
+  function pad(n, len) {
+    var s = String(Math.abs(Math.floor(n)))
+    while (s.length < (len || 2)) s = '0' + s
+    return s
+  }
+  function msDigitOf(ms) { var d = Math.round((ms || 0) / 100); return d < 0 ? 0 : (d > 9 ? 9 : d) }
+  function fmt(p) { return pad(p.h) + ':' + pad(p.m) + ':' + pad(p.s) + '.' + msDigitOf(p.ms) }
+  function hmsOf(p) { return pad(p.h) + ':' + pad(p.m) + ':' + pad(p.s) }
+  function clamp(p) {
+    if (p.ms > 999) { p.ms -= 1000; p.s += 1 }
+    if (p.ms < 0) { p.ms += 1000; p.s -= 1 }
+    if (p.s > 59) { p.s -= 60; p.m += 1 }
+    if (p.s < 0) { p.s += 60; p.m -= 1 }
+    if (p.m > 59) { p.m -= 60; p.h += 1 }
+    if (p.m < 0) { p.m += 60; p.h -= 1 }
+    if (p.h > 23) p.h -= 24
+    if (p.h < 0) p.h += 24
+    return p
+  }
+  function parse(text) {
+    var m = String(text || '').trim().match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\.(\d{1,3}))?$/)
+    if (!m) return null
+    var p = {
+      h: parseInt(m[1], 10),
+      m: parseInt(m[2], 10),
+      s: m[3] === undefined ? 0 : parseInt(m[3], 10),
+      ms: m[4] === undefined ? 0 : parseInt((m[4] + '00').slice(0, 3), 10)
+    }
+    if (p.h > 23 || p.m > 59 || p.s > 59 || p.ms > 999) return null
+    return p
+  }
+
+  var TASKS = ctx.seed.map(function (t) { return { parts: t.parts, name: t.name, repeat: t.repeat, enabled: t.enabled, place: t.place || null } })
+  var editing = false
+  var editIndex = -1
+  var cur = { h: 0, m: 0, s: 0, ms: 0 }
+
+  function rows() { return qa('#live-clicker .task-card') }
+
+  function paintRow(node, task) {
+    var t1 = q('.task-time-main', node)
+    if (t1 && t1.textContent !== hmsOf(task.parts)) t1.textContent = hmsOf(task.parts)
+    var t2 = q('.task-time-ms', node)
+    if (t2 && t2.textContent !== '.' + msDigitOf(task.parts.ms)) t2.textContent = '.' + msDigitOf(task.parts.ms)
+    var places = qa('.task-place', node)
+    if (places.length >= 2) {
+      places[0].textContent = coordOf(task.place) ? ('X ' + Math.round(task.place.x)) : 'X NaN'
+      places[1].textContent = coordOf(task.place) ? ('Y ' + Math.round(task.place.y)) : 'Y NaN'
+    }
+    var n1 = q('.task-name', node)
+    if (n1 && n1.textContent !== task.name) n1.textContent = task.name
+    var n2 = q('.task-repeat', node)
+    if (n2 && n2.textContent !== (task.repeat === 'once' ? '仅一次' : '每天')) n2.textContent = task.repeat === 'once' ? '仅一次' : '每天'
+  }
+
+  // 恢复预设：把列表重置回 6 组（对应「我的 → 清除本地数据」）
+  function resetTasks() {
+    var seed = ctx.seed.map(function (t) {
+      return { parts: t.parts, name: t.name, repeat: t.repeat, enabled: t.enabled, place: t.place || null }
+    })
+    TASKS.length = 0
+    seed.forEach(function (t) { TASKS.push(t) })
+    var list = rows()
+    for (var i = list.length - 1; i >= seed.length; i--) {
+      var card = list[i]
+      var row = card ? ((card.closest && card.closest('.task-row')) || card) : null
+      if (row && row.parentNode) row.parentNode.removeChild(row)
+    }
+    paintAll()
+    paintFloatBar()
+    if (typeof paintVbar === 'function') paintVbar() // 行数变了，滚动滑块要重算
+    return TASKS.length
+  }
+
+  function paintAll() {
+    var list = rows()
+    for (var i = 0; i < list.length && i < TASKS.length; i++) paintRow(list[i], TASKS[i])
+  }
+
+  function paintSheet() {
+    var vals = qa('#live-clicker .step-value')
+    var keys = ['h', 'm', 's', 'ms']
+    for (var i = 0; i < vals.length && i < keys.length; i++) {
+      var v = keys[i] === 'ms' ? String(msDigitOf(cur.ms)) : pad(cur[keys[i]])
+      if (vals[i].textContent !== v) vals[i].textContent = v
+    }
+    var main = q('#live-clicker .time-main')
+    if (main) main.textContent = hmsOf(cur)
+    var msNode = q('#live-clicker .time-ms')
+    if (msNode) msNode.textContent = '.' + msDigitOf(cur.ms)
+  }
+
+  // ---- 坐标系取点 ----
+  var place = null
+
+  // 有限数字才算有效坐标 —— typeof NaN === 'number'，只判类型会漏
+  function isCoord(v) { return typeof v === 'number' && isFinite(v) }
+  function coordOf(p) { return !!(p && isCoord(p.x) && isCoord(p.y)) }
+
+  function placeLabelOf(p) {
+    if (!p) return "X NaN · Y NaN" // 未设置坐标时显示字面 NaN（表示「不是数字」）
+    return "X " + Math.round(p.x) + " · Y " + Math.round(p.y)
+  }
+
+  function applyPlace(x, y) {
+    if (!isCoord(x) || !isCoord(y)) return
+    place = { x: Math.max(0, Math.min(375, Math.round(x))), y: Math.max(0, Math.min(812, Math.round(y))) }
+    var text = q("#live-clicker .place-text")
+    if (text) { text.textContent = placeLabelOf(place); text.className = "place-text place-on" }
+    var tag = q("#live-clicker .place-tag")
+    if (tag) tag.className = "place-tag"
+    var marker = q("#live-clicker .coord-marker")
+    if (marker) {
+      marker.style.display = "block"
+      marker.style.left = (place.x / 375 * 100) + "%"
+      marker.style.top = (place.y / 812 * 100) + "%"
+    }
+  }
+
+  // 真机上自定义 TabBar 是框架单独渲染的一层，弹层压不住它，只能主动隐藏；
+  // 预览里同样处理，保证两边表现一致
+  function setTabBarHidden(hidden) {
+    var bar = q('.live-screen.on .tabbar-wrap')
+    if (bar) bar.className = 'tabbar-wrap' + (hidden ? ' live-hidden' : '')
+    // 顺带锁住页面滚动：真机靠 catchtouchmove，预览靠 overflow
+    var screen = q('.live-screen.on')
+    if (screen) {
+      var cls = screen.className.replace(' sheet-open', '')
+      screen.className = hidden ? cls + ' sheet-open' : cls
+    }
+  }
+
+  function showSheet(index) {
+    editing = true
+    editIndex = index
+    var task = index >= 0 ? TASKS[index] : null
+    cur = task ? Object.assign({}, task.parts) : { h: new Date().getHours(), m: new Date().getMinutes(), s: new Date().getSeconds(), ms: new Date().getMilliseconds() }
+    var mask = q('#live-clicker .mask')
+    var sheet = q('#live-clicker .sheet')
+    if (mask) mask.className = 'mask'
+    if (sheet) sheet.className = 'sheet'
+    setTabBarHidden(true)
+    var title = q('#live-clicker .sheet-title')
+    if (title) title.textContent = task ? '编辑定时点击' : '新建定时点击'
+    var nameInput = qa('#live-clicker .form-input')[0]
+    if (nameInput) nameInput.value = task ? task.name : ''
+    var del = q('#live-clicker .danger-btn')
+    if (del) del.className = 'danger-btn' + (task ? '' : ' fp-hide')
+    var tags = qa('#live-clicker .seg-item')
+    var repeat = task ? task.repeat : 'daily'
+    for (var i = 0; i < tags.length; i++) {
+      var on = (i === 0 && repeat !== 'once') || (i === 1 && repeat === 'once')
+      tags[i].className = 'seg-item' + (on ? ' seg-on' : '')
+    }
+    // 位置区按被编辑项重置：未设坐标 → X 0 · Y 0，且不显示坐标标记与「清除」
+    place = coordOf(task && task.place) ? { x: task.place.x, y: task.place.y } : null
+    var ptext = q('#live-clicker .place-text')
+    if (ptext) { ptext.textContent = placeLabelOf(place); ptext.className = 'place-text' + (place ? ' place-on' : '') }
+    var ptag = q('#live-clicker .place-tag')
+    if (ptag) ptag.className = 'place-tag' + (place ? '' : ' fp-hide')
+    var pmarker = q('#live-clicker .coord-marker')
+    if (pmarker) pmarker.style.display = place ? 'block' : 'none'
+    if (place && pmarker) { pmarker.style.left = (place.x / 375 * 100) + '%'; pmarker.style.top = (place.y / 812 * 100) + '%' }
+    paintSheet()
+    buzz(8)
+  }
+
+  function hideSheet() {
+    editing = false
+    var mask = q('#live-clicker .mask')
+    var sheet = q('#live-clicker .sheet')
+    if (mask) mask.className = 'mask live-hidden'
+    if (sheet) sheet.className = 'sheet live-hidden'
+    setTabBarHidden(false)
+  }
+
+  // 毫秒位 0-9，越界时进位 / 借位到秒
+  function bumpMsIn(parts, delta) {
+    var p = Object.assign({}, parts)
+    var d = msDigitOf(p.ms) + (delta > 0 ? 1 : -1)
+    if (d > 9) { d = 0; p.s = (p.s || 0) + 1 }
+    else if (d < 0) { d = 9; p.s = (p.s || 0) - 1 }
+    p.ms = d * 100
+    return clamp(p)
+  }
+
+  function step(key, delta) {
+    if (key === "ms") {
+      cur = bumpMsIn(cur, delta)
+      paintSheet()
+      return
+    }
+    cur[key] = (cur[key] || 0) + delta
+    cur = clamp(cur)
+    paintSheet()
+  }
+
+  function save() {
+    var nameInput = qa('#live-clicker .form-input')[0]
+    var name = (nameInput && nameInput.value) ? nameInput.value : '点击'
+    var tags = qa('#live-clicker .seg-item')
+    var repeat = (tags[1] && tags[1].className.indexOf('seg-on') >= 0) ? 'once' : 'daily'
+    if (editIndex >= 0) {
+      TASKS[editIndex] = { parts: Object.assign({}, cur), name: name, repeat: repeat, enabled: TASKS[editIndex].enabled, place: place }
+      paintRow(rows()[editIndex], TASKS[editIndex])
+      toast('已保存')
+    } else {
+      var task = { parts: Object.assign({}, cur), name: name, repeat: repeat, enabled: true, place: place }
+      TASKS.push(task)
+      // 克隆整行（.task-row = 删除按钮 + 卡片），只克隆卡片的话新条目既不能左滑也不能删
+      var firstCard = rows()[0]
+      var firstRow = rowOfCard(firstCard)
+      var row = firstRow && firstRow.cloneNode ? firstRow.cloneNode(true) : null
+      if (row) {
+        row.className = 'task-row'
+        var card = q('.task-card', row)
+        if (card) card.className = 'task-card'
+        var del = q('.task-delete', row)
+        var body = q('#live-clicker .page-body')
+        if (body) body.appendChild(row)
+        if (card) {
+          paintRow(card, task)
+          bindRow(card)
+          // 克隆行是新 DOM，删除按钮要单独绑（绑定在它自己那一行上，下标不会错）
+          var db = q('.task-delete', row)
+          if (db) {
+            db.classList.add('live-tap')
+            db.addEventListener('click', function () { removeRow(row, card) })
+          }
+        }
+      }
+      toast('已新建并启用')
+    }
+    hideSheet()
+    buzz(10)
+  }
+
+  // 左滑露出删除（跟手位移，松手按位移判定）
+  var OPEN_PX = 84
+  function bindSwipe(node) {
+    var start = null
+    var open = false
+    node.addEventListener("pointerdown", function (e) {
+      start = { x: e.clientX, y: e.clientY, open: open }
+      if (node.setPointerCapture) { try { node.setPointerCapture(e.pointerId) } catch (err) {} }
+    })
+    node.addEventListener("pointermove", function (e) {
+      if (!start) return
+      var base = start.open ? -OPEN_PX : 0
+      var next = Math.max(-OPEN_PX - 20, Math.min(0, base + (e.clientX - start.x)))
+      node.style.transform = "translateX(" + next + "px)"
+    })
+    node.addEventListener("pointerup", function (e) {
+      if (!start) return
+      var dx = e.clientX - start.x
+      var dy = e.clientY - start.y
+      var wasOpen = start.open
+      start = null
+      node.style.transform = ""
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
+        if (wasOpen) { open = false; node.className = "task-card" }
+        // 下标在事件发生时现算：删过条目后闭包里存的旧下标会错位
+        else showSheet(rows().indexOf(node))
+        return
+      }
+      if (dx < -40) open = true
+      else if (dx > 40) open = false
+      else open = wasOpen
+      node.className = "task-card" + (open ? " task-open" : "")
+    })
+    node.addEventListener("pointercancel", function () { start = null; node.style.transform = "" })
+  }
+
+  function bindRow(node) {
+    var card = node
+    card.classList.add('live-tap')
+    bindSwipe(card)
+  }
+
+  // ---- 生效状态：跟随「开启悬浮窗」 ----
+  var floatOn = typeof ctx.getFloatOn === "function" ? !!ctx.getFloatOn() : ctx.floatOn !== false
+
+  function syncFloat() {
+    if (typeof ctx.getFloatOn === "function") floatOn = !!ctx.getFloatOn()
+    paintFloatBar()
+  }
+
+  function paintFloatBar() {
+    var bar = q("#live-clicker .float-bar")
+    if (bar) bar.className = "float-bar" + (floatOn ? " float-bar-on" : "")
+    var text = q("#live-clicker .float-bar-text")
+    if (text) text.textContent = floatOn ? "悬浮窗已开启 · 定时点击生效中" : "悬浮窗未开启 · 定时点击不会生效"
+    rows().forEach(function (node) {
+      var open = node.className.indexOf("task-open") >= 0 ? " task-open" : ""
+      node.className = "task-card" + open + (floatOn ? "" : " card-muted")
+    })
+  }
+
+  // ---- 绑定 ----
+  var panel = q("#live-clicker .coord-panel")
+  if (panel) {
+    panel.classList.add("live-tap")
+    panel.addEventListener("click", function (e) {
+      var rect = panel.getBoundingClientRect ? panel.getBoundingClientRect() : null
+      var w = (rect && rect.width) ? rect.width : 335
+      var h = (rect && rect.height) ? rect.height : 160
+      var rx = rect ? (e.clientX - rect.left) : (e.clientX || 0)
+      var ry = rect ? (e.clientY - rect.top) : (e.clientY || 0)
+      if (!isCoord(rx) || !isCoord(ry)) return // 合成事件可能没有 clientX，别算出 NaN
+      applyPlace(rx / w * 375, ry / h * 812)
+      toast("已取点 " + placeLabelOf(place))
+      buzz(8)
+    })
+  }
+  var pickBtn = q("#live-clicker .pick-btn")
+  if (pickBtn) {
+    pickBtn.classList.add("live-tap")
+    pickBtn.addEventListener("click", function () {
+      var mask = q("#live-clicker .pick-mask")
+      if (mask) mask.className = "pick-mask"
+      setTabBarHidden(true)
+      buzz(8)
+    })
+  }
+  var pickMask = q("#live-clicker .pick-mask")
+  if (pickMask) {
+    pickMask.addEventListener("click", function (e) {
+      pickMask.className = "pick-mask live-hidden" // 点一下就先收起遮罩，无论如何
+      var screen = q("#live-clicker .page") || q("#live-clicker")
+      var rect = screen && screen.getBoundingClientRect ? screen.getBoundingClientRect() : null
+      var x = rect ? (e.clientX - rect.left) : (e.clientX || 0)
+      var y = rect ? (e.clientY - rect.top) : (e.clientY || 0)
+      if (!isCoord(x) || !isCoord(y)) return // 拿不到坐标就不写值（宁可不动，也不写 NaN）
+      applyPlace(x, y)
+      setTabBarHidden(false)
+      toast("已记录位置 " + placeLabelOf(place))
+      buzz(10)
+    })
+  }
+  var pickCancel = q("#live-clicker .pick-cancel")
+  if (pickCancel) {
+    pickCancel.classList.add("live-tap")
+    pickCancel.addEventListener("click", function (e) {
+      e.stopPropagation()
+      var mask = q("#live-clicker .pick-mask")
+      if (mask) mask.className = "pick-mask live-hidden"
+      setTabBarHidden(false)
+    })
+  }
+  var clearBtn = q("#live-clicker .place-tag")
+  if (clearBtn) {
+    clearBtn.classList.add("live-tap")
+    clearBtn.addEventListener("click", function (e) {
+      e.stopPropagation()
+      place = null
+      var text = q("#live-clicker .place-text")
+      if (text) { text.textContent = "X NaN · Y NaN"; text.className = "place-text" }
+      var tag = q("#live-clicker .place-tag")
+      if (tag) tag.className = "place-tag fp-hide" // 真机靠 wx:if 收起，预览手动收
+      var marker = q("#live-clicker .coord-marker")
+      if (marker) marker.style.display = "none"
+      toast("已清除位置")
+    })
+  }
+  var addBtn = q('#live-clicker .add-btn')
+  if (addBtn) {
+    addBtn.classList.add('live-tap')
+    addBtn.addEventListener('click', function () { showSheet(-1) })
+  }
+  var mask = q('#live-clicker .mask')
+  if (mask) mask.addEventListener('click', hideSheet)
+  var closeBtn = q('#live-clicker .sheet-close')
+  if (closeBtn) {
+    closeBtn.classList.add('live-tap')
+    closeBtn.addEventListener('click', hideSheet)
+  }
+  var saveBtn = q('#live-clicker .sheet .primary-btn')
+  if (saveBtn) {
+    saveBtn.classList.add('live-tap')
+    saveBtn.addEventListener('click', save)
+  }
+  var delBtn = q('#live-clicker .danger-btn')
+  if (delBtn) {
+    delBtn.classList.add('live-tap')
+    delBtn.addEventListener('click', function () {
+      if (editIndex < 0) return
+      var node = rows()[editIndex]
+      if (node && node.parentNode) node.parentNode.removeChild(node)
+      TASKS.splice(editIndex, 1)
+      hideSheet()
+      toast('已删除')
+    })
+  }
+  var STEP_FALLBACK = ['h', 'm', 's', 'ms']
+  qa('#live-clicker .step-btn').forEach(function (btn, i) {
+    btn.classList.add('live-tap')
+    btn.addEventListener('click', function () {
+      var key = btn.getAttribute('data-key') || STEP_FALLBACK[Math.floor(i / 2)]
+      var delta = btn.getAttribute('data-delta')
+      delta = delta === null || delta === undefined ? (i % 2 === 0 ? -1 : 1) : Number(delta)
+      step(key, delta)
+    })
+  })
+  var repeatSegs = qa('#live-clicker .seg-item')
+  repeatSegs.forEach(function (seg, i) {
+    seg.classList.add('live-tap')
+    seg.addEventListener('click', function () {
+      repeatSegs.forEach(function (s2, j) { s2.className = 'seg-item' + (j === i ? ' seg-on' : '') })
+    })
+  })
+  var placeRow = qa('#live-clicker .form-row')
+  if (placeRow.length) {
+    var place = placeRow[placeRow.length - 1]
+    place.classList.add('live-tap')
+    place.addEventListener('click', function () { toast('位置设置已预留，后续版本开放') })
+  }
+  // 卡片一定包在 .task-row 里（左滑露出的删除按钮是它的兄弟节点）
+  function rowOfCard(card) {
+    if (!card) return null
+    return (card.closest && card.closest('.task-row')) || card
+  }
+  function afterRemove() {
+    toast('已删除')
+    buzz(10)
+    paintFloatBar()
+    if (typeof paintVbar === 'function') paintVbar() // 行数变了，滚动滑块重算
+  }
+  function removeRow(rowNode, cardNode) {
+    var idx = cardNode ? rows().indexOf(cardNode) : -1
+    var target = rowNode || cardNode
+    if (target && target.parentNode) target.parentNode.removeChild(target)
+    if (idx >= 0) TASKS.splice(idx, 1)
+    afterRemove()
+  }
+  // 先把「最新下标」算出来再删：删过条目之后按序号绑定的旧下标会错位
+  function removeAtIndex(index) {
+    var card = rows()[index]
+    if (card) removeRow(rowOfCard(card), card)
+  }
+  function bindDeleteBtn(btn, index) {
+    if (!btn) return
+    btn.classList.add('live-tap')
+    btn.addEventListener('click', function () { removeAtIndex(index) })
+  }
+  qa('#live-clicker .task-delete').forEach(bindDeleteBtn)
+  // 初始隐藏坐标标记与取点遮罩（WXML 里由 wx:if 控制，预览需要手动）
+  var initMarker = q("#live-clicker .coord-marker")
+  if (initMarker) initMarker.style.display = "none"
+  var initMask = q("#live-clicker .pick-mask")
+  if (initMask) initMask.className = "pick-mask live-hidden"
+  qa('.tab-item').forEach(function (item, i) { if (i === 1) item.addEventListener('click', syncFloat) })
+  rows().forEach(function (node) { bindRow(node) })
+  hideSheet()
+  hideFloat()
+
+  paintFloatBar()
+  return { paintAll: paintAll, showSheet: showSheet, hideSheet: hideSheet, step: step, save: save, syncFloat: syncFloat, resetTasks: resetTasks,
+    // 「点击」状态圆用：定时列表里是否存在距当前时刻 ±5 分钟的项
+    //   hasTaskNear / NEAR_WINDOW_MS 来自 utils/tasks.js 原样内联的块（见 build-live.js）
+    hasNear: function (parts, win) { return hasTaskNear(TASKS, parts, win) } }
+}
+})();
+</script>
+</body>
+</html>
