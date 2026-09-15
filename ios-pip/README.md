@@ -147,6 +147,27 @@ ExportOptions 可用工程里那份 `ExportOptions.plist`（把 `YOUR_TEAM_ID` �
 4. 也可先点开启再切后台，系统会自动进入画中画（`canStartPictureInPictureAutomaticallyFromInline`）
 5. 暂停按钮会暂停刷新，播放按钮恢复；关闭按钮退出画中画
 
+## v1.1 修了什么（真机反馈）
+
+**症状**：App 装上了，但点「开启画中画」毫无反应，界面上也没有任何提示。
+
+**根因**：`AVPictureInPictureController.ContentSource(sampleBufferDisplayLayer:)` 要求这个
+`AVSampleBufferDisplayLayer` **已经加在屏幕上真实存在的视图层级里**。上一版只把 layer 创建出来、
+没有挂到任何视图上，于是 `isPictureInPicturePossible` 永远是 `false`；
+而 `startPictureInPicture()` 在 possible 为 false 时是**静默无副作用**的 —— 表现就是「点了没反应」。
+
+**改法**：
+
+| 改动 | 说明 |
+| --- | --- |
+| 新增 `PiPDisplayLayerView` | UIViewRepresentable，把显示层挂到界面上（顺带当画中画的「同屏预览」），进出窗口时回调控制器 |
+| `PiPClockController` 改为 ObservableObject | `supported / possible / active / lastError` 全部暴露给界面，出问题一眼看得出 |
+| 开启逻辑加自动重试 | 刚启动时 possible 可能还没置位，会每 0.4 秒重试 6 次，并把原因写出来 |
+| 失败原因上屏 | delegate 的 `failedToStartPictureInPictureWithError` 会写进界面；不再只 print |
+| 预览与画中画共用刷新 | 同屏预览也是实时渲染（不是截图），切后台进画中画后继续 |
+| 首页改成产品样子 | 新增 `RingClockView`（SwiftUI Canvas 画的环形时钟：60 格刻度、进度弧、四色定位点、中心徽标），不再是干巴巴一行字 |
+| 加了 App 图标 | `Assets.xcassets/AppIcon.appiconset/icon-1024.png`（1024×1024，环形时钟图案），不再是白板图标 |
+
 ## 目录
 
 ```
@@ -155,7 +176,10 @@ ios-pip/
 ├── README.md
 └── ClockPiP/
     ├── App.swift                      SwiftUI App 入口（后台时准备画中画）
-    ├── ContentView.swift              首页：实时走时、倒计时、开启/关闭画中画
+    ├── ContentView.swift              首页：环形时钟、倒计时、画中画开关 + 同屏预览 + 状态诊断
+    ├── RingClockView.swift            环形时钟（Canvas 矢量绘制，与小程序同一套设计）
+    ├── PiPDisplayLayerView.swift      ★ 把画中画显示层挂到界面上（能开启画中画的前提）
+    ├── Assets.xcassets/AppIcon…        App 图标（1024×1024）
     ├── PiPClockController.swift        画中画控制器：帧渲染 → SampleBuffer → PiP
     ├── ClockFrameRenderer.swift        把时间/倒计时画进 CVPixelBuffer（480×240）
     ├── SilenceAudioKeepAlive.swift     静音音频保活（后台不掉）

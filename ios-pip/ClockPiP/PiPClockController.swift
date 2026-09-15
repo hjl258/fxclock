@@ -3,38 +3,63 @@ import AVKit
 import CoreMedia
 import UIKit
 
-/// 画中画悬浮时钟：把自定义内容渲染进 AVSampleBufferDisplayLayer，
+/// 画中画悬浮时钟：把自绘内容渲染进 AVSampleBufferDisplayLayer，
 /// 通过 AVPictureInPictureController 的 ContentSource 显示在画中画窗口里
 /// —— 画中画窗口可以浮在桌面和其它 App 之上（iOS 15+ 支持非视频内容）。
-final class PiPClockController: NSObject {
+///
+/// ⚠️ 关键前提：ContentSource(sampleBufferDisplayLayer:) 要求这个 layer 已经挂在
+/// 屏幕上的视图层级里（见 PiPDisplayLayerView），否则 isPictureInPicturePossible
+/// 恒为 false，startPictureInPicture() 静默无效 —— 这就是「点了没反应」的根因。
+final class PiPClockController: NSObject, ObservableObject {
 
     static let shared = PiPClockController()
+
+    // MARK: - 对外状态（界面直接绑这些，出问题一眼能看出来）
+
+    @Published private(set) var supported: Bool = AVPictureInPictureController.isPictureInPictureSupported()
+    @Published private(set) var possible = false
+    @Published private(set) var active = false
+    @Published private(set) var lastError: String?
 
     /// 抢购目标：每天 20:00（北京时间）
     var targetHour = 20
     var targetMinute = 0
 
-    private let displayLayer = AVSampleBufferDisplayLayer()
+    /// 交给界面挂载：PiPDisplayLayerView 会把它 addSublayer 到自己身上
+    let displayLayer = AVSampleBufferDisplayLayer()
+
     private var pipController: AVPictureInPictureController?
     private var pixelBufferPool: CVPixelBufferPool?
     private var timer: Timer?
     private var frameIndex: Int64 = 0
     private var target: Date = BeijingTime.nextBeijing(hour: 20, minute: 0, second: 0)
     private var prepared = false
+    private var hosted = false
+    private var retryLeft = 0
 
     private override init() { super.init() }
 
-    var isActive: Bool { pipController?.isPictureInPictureActive ?? false }
-    var isPossible: Bool { pipController?.isPictureInPicturePossible ?? false }
-    var isSupported: Bool { AVPictureInPictureController.isPictureInPictureSupported() }
+    // MARK: - 生命周期
 
-    /// 准备画中画控制器（App 启动即可调用，不消耗额外资源）
+    /// 显示层被挂上/移出窗口时由宿主视图通知
+    func layerHosted(_ inWindow: Bool) {
+        hosted = inWindow
+        if inWindow {
+            prepareIfNeeded()
+        } else {
+            // 离开窗口（例如页面被销毁）时，控制器要重新准备
+            prepared = false
+        }
+    }
+
+    /// 准备好控制器（幂等）。只有在显示层已经挂到界面上之后调用才有意义。
     func prepareIfNeeded() {
-        guard !prepared else { return }
-        guard isSupported else { return }
+        guard !prepared, hosted, supported else { return }
 
-        displayLayer.frame = CGRect(origin: .zero, size: ClockFrameRenderer.size)
         displayLayer.videoGravity = .resizeAspect
+        if displayLayer.frame == .zero {
+            displayLayer.frame = CGRect(origin: .zero, size: ClockFrameRenderer.size)
+        }
 
         let source = AVPictureInPictureController.ContentSource(
             sampleBufferDisplayLayer: displayLayer,
@@ -42,7 +67,7 @@ final class PiPClockController: NSObject {
         )
         let controller = AVPictureInPictureController(contentSource: source)
         controller.delegate = self
-        // 切到后台时自动进入画中画（要求音频会话已激活）
+        // 切到后台时自动进入画中画（要求音频会话已激活，见 SilenceAudioKeepAlive）
         controller.canStartPictureInPictureAutomaticallyFromInline = true
         pipController = controller
 
@@ -50,19 +75,67 @@ final class PiPClockController: NSObject {
         SilenceAudioKeepAlive.shared.start()
         enqueueFrame()   // 先喂一帧，避免画中画窗口一片黑
         prepared = true
+        startTicking()   // 同屏预览也要实时跳动
+        refreshState()
+    }
+
+    /// 界面定时器调用：刷新 possible / active
+    func refreshState() {
+        possible = pipController?.isPictureInPicturePossible ?? false
+        active = pipController?.isPictureInPictureActive ?? false
     }
 
     /// 由用户操作触发（按钮点击 / 切后台自动）
     func start() {
+        lastError = nil
         prepareIfNeeded()
-        guard let controller = pipController else { return }
+
+        guard supported else {
+            lastError = "这台设备/系统不支持画中画"
+            return
+        }
+        guard hosted else {
+            lastError = "画面还没挂到界面上，稍后重试"
+            return
+        }
+        guard let controller = pipController else {
+            lastError = "画中画控制器未就绪，稍后重试"
+            return
+        }
         guard !controller.isPictureInPictureActive else { return }
-        controller.startPictureInPicture()
+
+        if controller.isPictureInPicturePossible {
+            controller.startPictureInPicture()
+        } else {
+            // 刚启动/刚从后台回来时 possible 可能还没置位，自动重试几次，别让用户以为没反应
+            lastError = "画中画还没就绪，正在重试…"
+            retryLeft = 6
+            retryStart()
+        }
+    }
+
+    private func retryStart() {
+        guard retryLeft > 0 else {
+            lastError = "画中画开启失败：画面尚未就绪。请保持 App 在前台，再点一次。"
+            return
+        }
+        retryLeft -= 1
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            guard let self = self, let controller = self.pipController else { return }
+            guard !controller.isPictureInPictureActive else { return }
+            if controller.isPictureInPicturePossible {
+                self.lastError = nil
+                controller.startPictureInPicture()
+            } else {
+                self.refreshState()
+                self.retryStart()
+            }
+        }
     }
 
     func stop() {
         pipController?.stopPictureInPicture()
-        stopTicking()
+        refreshState()
     }
 
     // MARK: - 帧渲染
@@ -167,20 +240,38 @@ final class PiPClockController: NSObject {
 
 extension PiPClockController: AVPictureInPictureControllerDelegate {
 
+    func pictureInPictureControllerWillStartPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
+        lastError = nil
+        refreshState()
+    }
+
     func pictureInPictureControllerDidStartPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
         startTicking()
+        refreshState()
+    }
+
+    func pictureInPictureControllerWillStopPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
+        refreshState()
     }
 
     func pictureInPictureControllerDidStopPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
-        stopTicking()
+        refreshState()
     }
 
     func pictureInPictureController(
         _ pictureInPictureController: AVPictureInPictureController,
         failedToStartPictureInPictureWithError error: Error
     ) {
+        lastError = "画中画启动失败：" + error.localizedDescription
+        refreshState()
         print("画中画启动失败: \(error)")
-        stopTicking()
+    }
+
+    func pictureInPictureController(
+        _ pictureInPictureController: AVPictureInPictureController,
+        restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
+    ) {
+        completionHandler(true)
     }
 }
 
